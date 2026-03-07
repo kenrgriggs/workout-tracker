@@ -1,12 +1,12 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/*.{css,js,ico,png,svg,woff,woff2}"]
+    "exclude": ["/assets/*", "/*.{css,js,ico,png,svg,woff,woff2,html}"]
   },
   "globalHeaders": {
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
+    "X-Frame-Options": "SAMEORIGIN",
     "Referrer-Policy": "strict-origin-when-cross-origin"
   },
   "mimeTypes": {

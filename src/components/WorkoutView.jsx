@@ -443,9 +443,25 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
         }}>
           {ex?.name ?? workout.type}
         </h2>
-        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#555', marginBottom: 20 }}>
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#6b6b6b', marginBottom: workout.description ? 12 : 20 }}>
           {ex?.note}
         </p>
+
+        {workout.description && (
+          <div style={{
+            padding: '10px 14px',
+            background: '#161616',
+            border: '1px solid #222',
+            borderRadius: 6,
+            marginBottom: 20,
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 11,
+            color: '#6b6b6b',
+            lineHeight: 1.6,
+          }}>
+            {workout.description}
+          </div>
+        )}
 
         <SectionLabel>Session Notes</SectionLabel>
         <div style={{
@@ -554,6 +570,23 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
 
       {/* Timing bar */}
       <TimingBar timing={workout.timing} />
+
+      {/* Workout description */}
+      {workout.description && (
+        <div style={{
+          padding: '10px 14px',
+          background: '#161616',
+          border: '1px solid #222',
+          borderRadius: 6,
+          marginBottom: 20,
+          fontFamily: '"DM Mono", monospace',
+          fontSize: 11,
+          color: '#6b6b6b',
+          lineHeight: 1.6,
+        }}>
+          {workout.description}
+        </div>
+      )}
 
       {/* Exercises */}
       <SectionLabel>Exercises</SectionLabel>

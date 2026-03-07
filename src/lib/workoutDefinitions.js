@@ -14,6 +14,7 @@ export const WORKOUT_CYCLE = [
     day: 1,
     type: 'Push A',
     subtitle: 'Chest / Shoulders',
+    description: 'Chest and shoulders are the focus — triceps get indirect work from every pressing movement without dedicated sets.',
     duration: '~55 min lifting + 20 min zone 2',
     timing: [
       { label: 'Warmup', value: '5 min' },
@@ -34,6 +35,7 @@ export const WORKOUT_CYCLE = [
     day: 2,
     type: 'Zone 2',
     subtitle: 'Aerobic base',
+    description: 'Zone 2 builds your aerobic base, improves mitochondrial density, and enhances fat oxidation. Also aids recovery after Push A. This is intentionally easy — you should be able to hold a full conversation. Most people run Zone 2 too fast.',
     duration: '45–60 min easy running',
     notesOnly: true,
     exercises: [
@@ -44,6 +46,7 @@ export const WORKOUT_CYCLE = [
     day: 3,
     type: 'Pull A',
     subtitle: 'Back / Biceps / Rear Delts',
+    description: 'Horizontal and vertical pulling combined. Back volume is the priority — biceps work hard as a secondary mover on every compound pull.',
     duration: '~55 min lifting + 20 min zone 2',
     timing: [
       { label: 'Warmup', value: '5 min' },
@@ -63,6 +66,7 @@ export const WORKOUT_CYCLE = [
     day: 4,
     type: 'VO2',
     subtitle: 'Norwegian 4×4 Intervals',
+    description: "If you don't have a HR monitor, use perceived effort. Zone 5 should feel like a 9/10 — you can run but not sprint, and you cannot hold a conversation. By the 3rd or 4th interval, the 4-minute hard effort should feel genuinely brutal. If it doesn't, go faster.",
     duration: '~40 min total',
     notesOnly: true,
     exercises: [
@@ -81,6 +85,7 @@ export const WORKOUT_CYCLE = [
     day: 6,
     type: 'Push B',
     subtitle: 'Chest / Shoulders (Variation)',
+    description: 'Push A is barbell-dominant and heavier. Push B shifts to dumbbells and cables to hit different angles and reduce joint stress from identical loading patterns.',
     duration: '~55 min lifting + 20 min zone 2',
     timing: [
       { label: 'Warmup', value: '5 min' },
@@ -99,6 +104,7 @@ export const WORKOUT_CYCLE = [
     day: 7,
     type: 'Pull B',
     subtitle: 'Biceps Focus / Back Width',
+    description: 'Biceps are a priority. Pull A handles back volume with biceps as a secondary. Pull B flips that — biceps are the headline, back width is the support. Abs slot in here too, giving you a solid gap from Push A.',
     duration: '~50 min lifting + 20 min zone 2',
     timing: [
       { label: 'Warmup', value: '5 min' },
@@ -118,6 +124,7 @@ export const WORKOUT_CYCLE = [
     day: 8,
     type: 'Legs',
     subtitle: 'Quads / Hamstrings / Glutes / Calves',
+    description: 'Full lower body session. Squat is the primary compound — go heavier with slightly lower reps. Romanian deadlift is the hamstring anchor. Zone 2 after is fine at a walk given the leg fatigue.',
     duration: '~55 min lifting + 20 min zone 2',
     timing: [
       { label: 'Warmup', value: '5 min' },
