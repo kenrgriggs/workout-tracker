@@ -293,6 +293,19 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
     }))
   }, [])
 
+  async function handleSkip() {
+    setSaving(true)
+    await supabase.from('workouts').insert({
+      user_id: user.id,
+      day_number: dayNumber,
+      workout_type: workout.type,
+      completed_at: new Date().toISOString(),
+      notes: 'SKIPPED',
+    })
+    setSaving(false)
+    onFinish?.()
+  }
+
   async function handleFinish() {
     setSaving(true)
 
@@ -368,7 +381,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
             fontSize: 10,
             letterSpacing: '0.15em',
             textTransform: 'uppercase',
-            color: '#555',
+            color: '#6b6b6b',
             marginBottom: 8,
           }}>
             Day {dayNumber}
@@ -382,10 +395,29 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
           }}>
             Rest Day
           </h2>
-          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#444' }}>
+          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#444', marginBottom: 40 }}>
             Recovery · Hydrate · Let the body adapt
           </p>
         </div>
+        <button
+          onClick={handleSkip}
+          disabled={saving}
+          style={{
+            width: '100%',
+            padding: '13px',
+            borderRadius: 8,
+            background: 'transparent',
+            border: '1px solid #2a2a2a',
+            color: '#6b6b6b',
+            fontFamily: '"Bebas Neue", sans-serif',
+            fontSize: 20,
+            letterSpacing: '0.06em',
+            cursor: 'pointer',
+            opacity: saving ? 0.5 : 1,
+          }}
+        >
+          {saving ? 'Logging...' : 'Log Rest Day'}
+        </button>
       </div>
     )
   }
@@ -442,25 +474,46 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
           />
         </div>
 
-        <button
-          onClick={handleFinish}
-          disabled={saving}
-          style={{
-            width: '100%',
-            padding: 16,
-            borderRadius: 8,
-            background: color,
-            border: 'none',
-            color: '#000',
-            fontFamily: '"Bebas Neue", sans-serif',
-            fontSize: 22,
-            letterSpacing: '0.06em',
-            cursor: 'pointer',
-            opacity: saving ? 0.5 : 1,
-          }}
-        >
-          {saving ? 'Saving...' : 'Finish Workout'}
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <button
+            onClick={handleFinish}
+            disabled={saving}
+            style={{
+              width: '100%',
+              padding: 16,
+              borderRadius: 8,
+              background: color,
+              border: 'none',
+              color: '#000',
+              fontFamily: '"Bebas Neue", sans-serif',
+              fontSize: 22,
+              letterSpacing: '0.06em',
+              cursor: 'pointer',
+              opacity: saving ? 0.5 : 1,
+            }}
+          >
+            {saving ? 'Saving...' : 'Finish Workout'}
+          </button>
+          <button
+            onClick={handleSkip}
+            disabled={saving}
+            style={{
+              width: '100%',
+              padding: '13px',
+              borderRadius: 8,
+              background: 'transparent',
+              border: '1px solid #2a2a2a',
+              color: '#6b6b6b',
+              fontFamily: '"Bebas Neue", sans-serif',
+              fontSize: 20,
+              letterSpacing: '0.06em',
+              cursor: 'pointer',
+              opacity: saving ? 0.5 : 1,
+            }}
+          >
+            Skip Day
+          </button>
+        </div>
       </div>
     )
   }
@@ -544,26 +597,48 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
         />
       </div>
 
-      <button
-        onClick={handleFinish}
-        disabled={saving}
-        style={{
-          width: '100%',
-          padding: 16,
-          borderRadius: 8,
-          background: color,
-          border: 'none',
-          color: '#000',
-          fontFamily: '"Bebas Neue", sans-serif',
-          fontSize: 22,
-          letterSpacing: '0.06em',
-          cursor: 'pointer',
-          opacity: saving ? 0.5 : 1,
-          transition: 'opacity 0.15s',
-        }}
-      >
-        {saving ? 'Saving...' : 'Finish Workout'}
-      </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <button
+          onClick={handleFinish}
+          disabled={saving}
+          style={{
+            width: '100%',
+            padding: 16,
+            borderRadius: 8,
+            background: color,
+            border: 'none',
+            color: '#000',
+            fontFamily: '"Bebas Neue", sans-serif',
+            fontSize: 22,
+            letterSpacing: '0.06em',
+            cursor: 'pointer',
+            opacity: saving ? 0.5 : 1,
+            transition: 'opacity 0.15s',
+          }}
+        >
+          {saving ? 'Saving...' : 'Finish Workout'}
+        </button>
+        <button
+          onClick={handleSkip}
+          disabled={saving}
+          style={{
+            width: '100%',
+            padding: '13px',
+            borderRadius: 8,
+            background: 'transparent',
+            border: '1px solid #2a2a2a',
+            color: '#6b6b6b',
+            fontFamily: '"Bebas Neue", sans-serif',
+            fontSize: 20,
+            letterSpacing: '0.06em',
+            cursor: 'pointer',
+            opacity: saving ? 0.5 : 1,
+            transition: 'opacity 0.15s',
+          }}
+        >
+          Skip Day
+        </button>
+      </div>
     </div>
   )
 }

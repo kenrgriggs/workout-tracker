@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPL + VO2 Max Program</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #e8ff4a;
+    --accent2: #ff6b35;
+    --accent3: #4af0ff;
+    --text: #f0f0f0;
+    --muted: #666;
+    --push: #ff6b35;
+    --pull: #4af0ff;
+    --legs: #e8ff4a;
+    --vo2: #ff3b3b;
+    --cardio: #a78bfa;
+    --rest: #333;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    position: relative; z-index: 1;
+  }
+
+  header { padding-bottom: 32px; margin-bottom: 40px; }
+
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 8vw, 88px);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+
+  h1 span.lo { color: var(--muted); font-size: 0.55em; display: block; margin-top: 4px; }
+
+  .meta-row { display: flex; gap: 32px; flex-wrap: wrap; margin-top: 20px; }
+  .meta-item { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .meta-item strong { color: var(--text); font-size: 13px; display: block; margin-top: 2px; }
+
+  .week-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 8px; margin-bottom: 48px; }
+
+  @media (max-width: 600px) {
+    .week-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .day-pill {
+    border-radius: 6px; padding: 10px 8px; text-align: center;
+    cursor: pointer; transition: transform 0.15s; border: 1px solid transparent;
+  }
+  .day-pill:hover { transform: translateY(-2px); }
+  .day-pill.push { background: rgba(255,107,53,0.12); border-color: rgba(255,107,53,0.3); }
+  .day-pill.pull { background: rgba(74,240,255,0.1); border-color: rgba(74,240,255,0.25); }
+  .day-pill.legs { background: rgba(232,255,74,0.1); border-color: rgba(232,255,74,0.25); }
+  .day-pill.vo2  { background: rgba(255,59,59,0.15); border-color: rgba(255,59,59,0.4); }
+  .day-pill.cardio { background: rgba(167,139,250,0.12); border-color: rgba(167,139,250,0.3); }
+  .day-pill.rest { background: var(--surface); border-color: var(--border); opacity: 0.5; }
+
+  .day-pill .day-name { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
+  .day-pill .day-type { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 0.05em; margin-top: 2px; }
+  .day-pill.push .day-type { color: var(--push); }
+  .day-pill.pull .day-type { color: var(--pull); }
+  .day-pill.legs .day-type { color: var(--legs); }
+  .day-pill.vo2  .day-type { color: var(--vo2); }
+  .day-pill.cardio .day-type { color: var(--cardio); }
+  .day-pill.rest .day-type  { color: var(--muted); }
+  .day-pill .day-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .workout-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 16px; overflow: hidden;
+  }
+
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; cursor: pointer; user-select: none;
+  }
+  .card-header:hover { background: var(--surface2); }
+
+  .card-title-group { display: flex; align-items: center; gap: 12px; }
+
+  .type-badge {
+    font-family: 'Bebas Neue', sans-serif; font-size: 13px;
+    letter-spacing: 0.08em; padding: 3px 10px; border-radius: 4px;
+  }
+  .badge-push { background: rgba(255,107,53,0.2); color: var(--push); }
+  .badge-pull { background: rgba(74,240,255,0.15); color: var(--pull); }
+  .badge-legs { background: rgba(232,255,74,0.15); color: var(--legs); }
+  .badge-vo2  { background: rgba(255,59,59,0.2); color: var(--vo2); }
+  .badge-cardio { background: rgba(167,139,250,0.15); color: var(--cardio); }
+
+  .card-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.04em; }
+  .card-meta { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  .chevron { color: var(--muted); font-size: 18px; transition: transform 0.2s; }
+  .open .chevron { transform: rotate(180deg); }
+
+  .card-body { display: none; padding: 0 20px 20px; border-top: 1px solid var(--border); }
+  .card-body.visible { display: block; }
+
+  .ex-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+  .ex-table th {
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); text-align: left;
+    padding: 6px 12px 6px 0; border-bottom: 1px solid var(--border);
+  }
+  .ex-table td { padding: 10px 12px 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; }
+  .ex-table tr:last-child td { border-bottom: none; }
+
+  .ex-name { font-weight: 500; color: var(--text); }
+  .ex-sets { font-family: 'DM Mono', monospace; color: var(--accent); font-size: 12px; white-space: nowrap; }
+  .ex-note { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .muscle-tag {
+    display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 3px;
+    background: var(--surface2); color: var(--muted); margin-right: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .interval-block { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .interval-step { border-radius: 8px; padding: 12px 16px; flex: 1; min-width: 120px; border: 1px solid var(--border); }
+  .interval-step.warmup  { border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.08); }
+  .interval-step.hard    { border-color: rgba(255,59,59,0.4);   background: rgba(255,59,59,0.1); }
+  .interval-step.recover { border-color: rgba(74,240,255,0.25); background: rgba(74,240,255,0.07); }
+  .interval-step.cooldown { border-color: rgba(232,255,74,0.25); background: rgba(232,255,74,0.06); }
+
+  .interval-step .step-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .interval-step .step-time  { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.05em; }
+  .interval-step.warmup .step-time  { color: var(--cardio); }
+  .interval-step.hard .step-time    { color: var(--vo2); }
+  .interval-step.recover .step-time { color: var(--pull); }
+  .interval-step.cooldown .step-time { color: var(--legs); }
+  .interval-step .step-desc { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .repeat-badge {
+    display: inline-block; background: rgba(255,59,59,0.15); border: 1px solid rgba(255,59,59,0.4);
+    color: var(--vo2); font-family: 'Bebas Neue', sans-serif; font-size: 14px;
+    padding: 4px 12px; border-radius: 4px; margin: 12px 0 4px;
+  }
+
+  .hr-guide { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-top: 16px; font-size: 12px; }
+  .hr-guide .hr-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .hr-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+  .hr-row:last-child { border-bottom: none; }
+  .hr-zone { font-weight: 500; min-width: 80px; }
+  .z1 { color: #60d394; } .z2 { color: #a2d4f5; } .z3 { color: var(--cardio); }
+  .z4 { color: var(--accent); } .z5 { color: var(--vo2); }
+
+  .note-box {
+    background: rgba(232,255,74,0.06); border: 1px solid rgba(232,255,74,0.2);
+    border-radius: 6px; padding: 12px 14px; margin-top: 16px; font-size: 12px; color: #ccc;
+  }
+  .note-box strong { color: var(--accent); }
+
+  .timing-bar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-top: 16px; padding: 12px 14px; background: var(--surface2); border-radius: 6px;
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
+  }
+  .timing-bar span.t { color: var(--text); font-weight: 500; }
+  .timing-sep { color: var(--border); }
+
+  .principles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  @media (max-width: 600px) { .principles-grid { grid-template-columns: 1fr; } }
+  .principle-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .principle-card .pc-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .principle-card .pc-value { font-size: 13px; color: var(--text); }
+  .principle-card .pc-value strong { color: var(--accent); }
+
+  footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">Training Program / PPL + VO2 Max</div>
+    <h1>
+      <span style="color:var(--push)">PUSH</span>
+      <span style="color:var(--pull)"> PULL </span>
+      <span style="color:var(--legs)">LEGS</span>
+      <span class="lo" style="color:var(--vo2)">+ VO2 Max Protocol</span>
+    </h1>
+    <div class="meta-row">
+      <div class="meta-item">Cycle<strong>9 days</strong></div>
+      <div class="meta-item">Lift sessions<strong>~55 min</strong></div>
+      <div class="meta-item">VO2 Intervals<strong>Once / cycle</strong></div>
+      <div class="meta-item">Zone 2<strong>Once / cycle</strong></div>
+      <div class="meta-item">Rest days<strong>2 per cycle</strong></div>
+    </div>
+  </header>
+
+  <div class="section-label">9-Day Training Cycle</div>
+  <div class="week-grid">
+    <div class="day-pill push" onclick="jumpTo('push-a')">
+      <div class="day-name">Day 1</div>
+      <div class="day-type">Push A</div>
+      <div class="day-sub">Chest / Shoulders</div>
+    </div>
+    <div class="day-pill cardio" onclick="jumpTo('zone2')">
+      <div class="day-name">Day 2</div>
+      <div class="day-type">Zone 2</div>
+      <div class="day-sub">Easy run</div>
+    </div>
+    <div class="day-pill pull" onclick="jumpTo('pull-a')">
+      <div class="day-name">Day 3</div>
+      <div class="day-type">Pull A</div>
+      <div class="day-sub">Back / Biceps</div>
+    </div>
+    <div class="day-pill vo2" onclick="jumpTo('vo2')">
+      <div class="day-name">Day 4</div>
+      <div class="day-type">VO2</div>
+      <div class="day-sub">4x4 Intervals</div>
+    </div>
+    <div class="day-pill rest">
+      <div class="day-name">Day 5</div>
+      <div class="day-type">Rest</div>
+      <div class="day-sub">&nbsp;</div>
+    </div>
+    <div class="day-pill push" onclick="jumpTo('push-b')">
+      <div class="day-name">Day 6</div>
+      <div class="day-type">Push B</div>
+      <div class="day-sub">Chest / Shoulders</div>
+    </div>
+    <div class="day-pill pull" onclick="jumpTo('pull-b')">
+      <div class="day-name">Day 7</div>
+      <div class="day-type">Pull B</div>
+      <div class="day-sub">Biceps focus</div>
+    </div>
+    <div class="day-pill legs" onclick="jumpTo('legs')">
+      <div class="day-name">Day 8</div>
+      <div class="day-type">Legs</div>
+      <div class="day-sub">Lower body</div>
+    </div>
+    <div class="day-pill rest">
+      <div class="day-name">Day 9</div>
+      <div class="day-type">Rest</div>
+      <div class="day-sub">&nbsp;</div>
+    </div>
+  </div>
+
+  <div class="section-label">Program Logic</div>
+  <div class="principles-grid">
+    <div class="principle-card">
+      <div class="pc-label">Why 9 days</div>
+      <div class="pc-value">Decouples training from the calendar. No more "leg day is always Saturday." Each cycle repeats on its own schedule.</div>
+    </div>
+    <div class="principle-card">
+      <div class="pc-label">Push and Pull twice</div>
+      <div class="pc-value">Chest hits Push A + Push B. Biceps hit Pull A + Pull B. <strong>2x frequency</strong> per muscle group is the sweet spot for hypertrophy.</div>
+    </div>
+    <div class="principle-card">
+      <div class="pc-label">Cardio placement</div>
+      <div class="pc-value">Zone 2 on Day 2 aids recovery after Push A. VO2 on Day 4 sits between Pull A and Rest — hard effort, then a full recovery day after.</div>
+    </div>
+    <div class="principle-card">
+      <div class="pc-label">Cardio after lifting</div>
+      <div class="pc-value"><strong>20 min Zone 2</strong> treadmill ends each lifting session. Low enough intensity it won't blunt hypertrophy signaling.</div>
+    </div>
+  </div>
+
+  <br><br>
+
+  <div class="section-label">Workouts</div>
+
+  <!-- PUSH DAY A -->
+  <div id="push-a" class="workout-card">
+    <div class="card-header" onclick="toggle(this)">
+      <div class="card-title-group">
+        <span class="type-badge badge-push">Push</span>
+        <div>
+          <div class="card-title">Push Day A — Chest / Shoulders</div>
+          <div class="card-meta">Day 1 · ~55 min lifting + 20 min cardio</div>
+        </div>
+      </div>
+      <span class="chevron">&#8964;</span>
+    </div>
+    <div class="card-body">
+      <div class="timing-bar">
+        <span>Warmup: <span class="t">5 min</span></span>
+        <span class="timing-sep">|</span>
+        <span>Work sets: <span class="t">~45 min</span></span>
+        <span class="timing-sep">|</span>
+        <span>Cardio: <span class="t">20 min Zone 2</span></span>
+        <span class="timing-sep">|</span>
+        <span>Rest between sets: <span class="t">60–90s</span></span>
+      </div>
+      <table class="ex-table">
+        <thead>
+          <tr><th style="width:38%">Exercise</th><th>Sets × Reps</th><th>Muscles</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><div class="ex-name">Incline Bench Press</div></td><td><div class="ex-sets">4 × 10</div></td><td><span class="muscle-tag">Upper chest</span></td><td><div class="ex-note">Primary chest movement. 2–3 RIR.</div></td></tr>
+          <tr><td><div class="ex-name">Flat Bench Press</div></td><td><div class="ex-sets">3 × 10</div></td><td><span class="muscle-tag">Chest</span></td><td><div class="ex-note">Drop to 3 sets — already hitting chest hard above.</div></td></tr>
+          <tr><td><div class="ex-name">Machine Flyes</div></td><td><div class="ex-sets">3 × 12</div></td><td><span class="muscle-tag">Chest isolation</span></td><td><div class="ex-note">Stretch focus. Control the eccentric.</div></td></tr>
+          <tr><td><div class="ex-name">Overhead Press</div></td><td><div class="ex-sets">4 × 10</div></td><td><span class="muscle-tag">Delts</span></td><td><div class="ex-note">Primary shoulder movement.</div></td></tr>
+          <tr><td><div class="ex-name">Side Lateral Raises</div></td><td><div class="ex-sets">3 × 15</div></td><td><span class="muscle-tag">Side delts</span></td><td><div class="ex-note">Higher reps work well here. Slight forward lean.</div></td></tr>
+          <tr><td><div class="ex-name">Ab Work</div></td><td><div class="ex-sets">3 × 15</div></td><td><span class="muscle-tag">Core</span></td><td><div class="ex-note">Captain's chair or cable crunch.</div></td></tr>
+          <tr><td><div class="ex-name">Treadmill (Zone 2)</div></td><td><div class="ex-sets">20 min</div></td><td><span class="muscle-tag">Cardio</span></td><td><div class="ex-note">~65% max HR. Easy pace. Cooldown.</div></td></tr>
+        </tbody>
+      </table>
+      <div class="note-box"><strong>Volume note:</strong> Chest and shoulders are the focus — triceps get indirect work from every pressing movement without dedicated sets.</div>
+    </div>
+  </div>
+
+  <!-- ZONE 2 -->
+  <div id="zone2" class="workout-card">
+    <div class="card-header" onclick="toggle(this)">
+      <div class="card-title-group">
+        <span class="type-badge badge-cardio">Cardio</span>
+        <div>
+          <div class="card-title">Zone 2 Run — Aerobic Base</div>
+          <div class="card-meta">Day 2 · 45–60 min easy running</div>
+        </div>
+      </div>
+      <span class="chevron">&#8964;</span>
+    </div>
+    <div class="card-body">
+      <div class="note-box" style="margin-top:16px"><strong>What this does:</strong> Zone 2 builds your aerobic base, improves mitochondrial density, and enhances fat oxidation. Also aids recovery after Push A. This is intentionally easy — you should be able to hold a full conversation. Most people run Zone 2 too fast.</div>
+      <table class="ex-table">
+        <thead><tr><th>Block</th><th>Duration</th><th>Intensity</th></tr></thead>
+        <tbody>
+          <tr><td><div class="ex-name">Easy run (treadmill or road)</div></td><td><div class="ex-sets">45–60 min</div></td><td><div class="ex-note">60–70% max HR. Fully conversational. If you're breathing hard, slow down.</div></td></tr>
+        </tbody>
+      </table>
+      <div class="note-box" style="margin-top:12px"><strong>Over time:</strong> As your aerobic base improves, you'll run faster at the same low HR. That's the adaptation you're after.</div>
+    </div>
+  </div>
+
+  <!-- PULL DAY A -->
+  <div id="pull-a" class="workout-card">
+    <div class="card-header" onclick="toggle(this)">
+      <div class="card-title-group">
+        <span class="type-badge badge-pull">Pull</span>
+        <div>
+          <div class="card-title">Pull Day A — Back / Biceps / Rear Delts</div>
+          <div class="card-meta">Day 3 · ~55 min lifting + 20 min cardio</div>
+        </div>
+      </div>
+      <span class="chevron">&#8964;</span>
+    </div>
+    <div class="card-body">
+      <div class="timing-bar">
+        <span>Warmup: <span class="t">5 min</span></span>
+        <span class="timing-sep">|</span>
+        <span>Work sets: <span class="t">~45 min</span></span>
+        <span class="timing-sep">|</span>
+        <span>Cardio: <span class="t">20 min Zone 2</span></span>
+      </div>
+      <table class="ex-table">
+        <thead><tr><th style="width:38%">Exercise</th><th>Sets × Reps</th><th>Muscles</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><div class="ex-name">Barbell Row</div></td><td><div class="ex-sets">4 × 10</div></td><td><span class="muscle-tag">Lats</span><span class="muscle-tag">Mid-back</span></td><td><div class="ex-note">Horizontal pull. Primary compound.</div></td></tr>
+          <tr><td><div class="ex-name">Lat Pulldown</div></td><td><div class="ex-sets">4 × 10</div></td><td><span class="muscle-tag">Lats</span></td><td><div class="ex-note">Vertical pull. Full stretch at top.</div></td></tr>
+          <tr><td><div class="ex-name">Seated Cable Row (close grip)</div></td><td><div class="ex-sets">3 × 12</div></td><td><span class="muscle-tag">Mid-back</span><span class="muscle-tag">Rhomboids</span></td><td><div class="ex-note">Squeeze at peak contraction.</div></td></tr>
+          <tr><td><div class="ex-name">Face Pulls</div></td><td><div class="ex-sets">3 × 15</div></td><td><span class="muscle-tag">Rear delts</span><span class="muscle-tag">Rotator cuff</span></td><td><div class="ex-note">Rear delt health. External rotation emphasis.</div></td></tr>
+          <tr><td><div class="ex-name">Barbell Curl</div></td><td><div class="ex-sets">3 × 10</div></td><td><span class="muscle-tag">Biceps</span></td><td><div class="ex-note">Supinate at top.</div></td></tr>
+          <tr><td><div class="ex-name">Hammer Curls</div></td><td><div class="ex-sets">3 × 10</div></td><td><span class="muscle-tag">Brachialis</span><span class="muscle-tag">Forearms</span></td><td><div class="ex-note">Brachialis adds arm thickness.</div></td></tr>
+          <tr><td><div class="ex-name">Treadmill (Zone 2)</div></td><td><div class="ex-sets">20 min</div></td><td><span class="muscle-tag">Cardio</span></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VO2 MAX -->
+  <div id="vo2" class="workout-card">
+    <div class="card-header" onclick="toggle(this)">
+      <div class="card-title-group">
+        <span class="type-badge badge-vo2">VO2</span>
+        <div>
+          <div class="card-title">VO2 Max Day — Norwegian 4×4 Intervals</div>
+          <div class="card-meta">Day 4 · ~35–40 min total</div>
+        </div>
+      </div>
+      <span class="chevron">&#8964;</span>
+    </div>
+    <div class="card-body">
+      <div class="note-box" style="margin-top:16px"><strong>What is VO2 max training?</strong> Your VO2 max is the maximum rate your body can consume oxygen during exercise. Training it means repeatedly pushing your cardiovascular system to near its ceiling (90–95% max HR) and letting it recover, then doing it again. The Norwegian 4×4 protocol is the most studied and effective method — 4 minutes hard, 3 minutes easy, repeated 4 times. Once per cycle produces measurable gains within 6–8 weeks.</div>
+      <div class="interval-block">
+        <div class="interval-step warmup">
+          <div class="step-label">Warmup</div>
+          <div class="step-time">10 MIN</div>
+          <div class="step-desc">Easy jog. HR building to ~60–70% max. Loosen up.</div>
+        </div>
+        <div style="flex:3; min-width:200px;">
+          <div style="font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); margin-bottom:8px; letter-spacing:0.1em; text-transform:uppercase;">Main Block</div>
+          <div class="repeat-badge">× 4 ROUNDS</div>
+          <div class="interval-block" style="margin-top:8px;">
+            <div class="interval-step hard">
+              <div class="step-label">Hard interval</div>
+              <div class="step-time">4 MIN</div>
+              <div class="step-desc">Run at 90–95% max HR. Should feel very hard. Talking in single words only.</div>
+            </div>
+            <div class="interval-step recover">
+              <div class="step-label">Active recovery</div>
+              <div class="step-time">3 MIN</div>
+              <div class="step-desc">Slow jog or brisk walk. HR drops to ~60–70%.</div>
+            </div>
+          </div>
+          <div style="font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); margin-top:8px;">Total work block: 28 minutes</div>
+        </div>
+        <div class="interval-step cooldown">
+          <div class="step-label">Cooldown</div>
+          <div class="step-time">5 MIN</div>
+          <div class="step-desc">Walk or very easy jog. HR returning to normal.</div>
+        </div>
+      </div>
+      <div class="hr-guide">
+        <div class="hr-title">Heart Rate Zones — Estimate your max HR as 220 minus your age</div>
+        <div class="hr-row"><span class="hr-zone z1">Zone 1</span><span>50–60% max HR</span><span>Very easy, recovery</span></div>
+        <div class="hr-row"><span class="hr-zone z2">Zone 2</span><span>60–70% max HR</span><span>Easy, conversational — your daily cardio</span></div>
+        <div class="hr-row"><span class="hr-zone z3">Zone 3</span><span>70–80% max HR</span><span>Moderate, harder to talk</span></div>
+        <div class="hr-row"><span class="hr-zone z4">Zone 4</span><span>80–90% max HR</span><span>Hard, threshold work</span></div>
+        <div class="hr-row"><span class="hr-zone z5">Zone 5 — VO2 target</span><span>90–95% max HR</span><span>Near max. This is where VO2 adaptation happens.</span></div>
+      </div>
+      <div class="note-box" style="margin-top:12px"><strong>Practical tip:</strong> If you don't have a HR monitor, use perceived effort. Zone 5 should feel like a 9/10 — you can run but not sprint, and you cannot hold a conversation. By the 3rd or 4th interval, the 4-minute hard effort should feel genuinely brutal. If it doesn't, go faster.</div>
+    </div>
+  </div>
+
+  <!-- PUSH DAY B -->
+  <div id="push-b" class="workout-card">
+    <div class="card-header" onclick="toggle(this)">
+      <div class="card-title-group">
+        <span class="type-badge badge-push">Push</span>
+        <div>
+          <div class="card-title">Push Day B — Chest / Shoulders (Variation)</div>
+          <div class="card-meta">Day 6 · ~55 min lifting + 20 min cardio</div>
+        </div>
+      </div>
+      <span class="chevron">&#8964;</span>
+    </div>
+    <div class="card-body">
+      <div class="note-box" style="margin-top:16px"><strong>Why vary it:</strong> Push A is barbell-dominant and heavier. Push B shifts to dumbbells and cables to hit different angles and reduce joint stress from identical loading patterns.</div>
+      <div class="timing-bar">
+        <span>Warmup: <span class="t">5 min</span></span><span class="timing-sep">|</span>
+        <span>Work sets: <span class="t">~45 min</span></span><span class="timing-sep">|</span>
+        <span>Cardio: <span class="t">20 min Zone 2</span></span>
+      </div>
+      <table class="ex-table">
+        <thead><tr><th style="width:38%">Exercise</th><th>Sets × Reps</th><th>Muscles</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><div class="ex-name">Dumbbell Incline Press</div></td><td><div class="ex-sets">4 × 10</div></td><td><span class="muscle-tag">Upper chest</span></td><td><div class="ex-note">Greater ROM than barbell. Second chest session.</div></td></tr>
+          <tr><td><div class="ex-name">Cable Chest Fly (low to high)</div></td><td><div class="ex-sets">3 × 12</div></td><td><span class="muscle-tag">Upper chest</span></td><td><div class="ex-note">Constant tension. Really stretch into it.</div></td></tr>
+          <tr><td><div class="ex-name">Flat Dumbbell Press</div></td><td><div class="ex-sets">3 × 10</div></td><td><span class="muscle-tag">Chest</span></td><td><div class="ex-note">Greater stretch at bottom vs barbell.</div></td></tr>
+          <tr><td><div class="ex-name">Dumbbell Shoulder Press</div></td><td><div class="ex-sets">4 × 10</div></td><td><span class="muscle-tag">Delts</span></td><td><div class="ex-note">Neutral grip reduces shoulder stress.</div></td></tr>
+          <tr><td><div class="ex-name">Cable Lateral Raise</div></td><td><div class="ex-sets">3 × 15</div></td><td><span class="muscle-tag">Side delts</span></td><td><div class="ex-note">Cable keeps tension at full stretch.</div></td></tr>
+          <tr><td><div class="ex-name">Treadmill (Zone 2)</div></td><td><div class="ex-sets">20 min</div></td><td><span class="muscle-tag">Cardio</span></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PULL DAY B -->
+  <div id="pull-b" class="workout-card">
+    <div class="card-header" onclick="toggle(this)">
+      <div class="card-title-group">
+        <span class="type-badge badge-pull">Pull</span>
+        <div>
+          <div class="card-title">Pull Day B — Biceps Focus / Back Width</div>
+          <div class="card-meta">Day 7 · ~50 min lifting + 20 min cardio</div>
+        </div>
+      </div>
+      <span class="chevron">&#8964;</span>
+    </div>
+    <div class="card-body">
+      <div class="note-box" style="margin-top:16px"><strong>Why a second pull day:</strong> Biceps are a priority. Pull A handles back volume with biceps as a secondary. Pull B flips that — biceps are the headline, back width is the support. Abs slot in here too, giving you a solid gap from Push A's ab work.</div>
+      <div class="timing-bar">
+        <span>Warmup: <span class="t">5 min</span></span><span class="timing-sep">|</span>
+        <span>Work sets: <span class="t">~40 min</span></span><span class="timing-sep">|</span>
+        <span>Cardio: <span class="t">20 min Zone 2</span></span>
+      </div>
+      <table class="ex-table">
+        <thead><tr><th style="width:38%">Exercise</th><th>Sets × Reps</th><th>Muscles</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><div class="ex-name">Lat Pulldown (wide grip)</div></td><td><div class="ex-sets">4 × 10</div></td><td><span class="muscle-tag">Lats</span></td><td><div class="ex-note">Pull elbows down, not just the bar.</div></td></tr>
+          <tr><td><div class="ex-name">Cable Row (neutral grip)</div></td><td><div class="ex-sets">3 × 12</div></td><td><span class="muscle-tag">Lats</span><span class="muscle-tag">Mid-back</span></td><td><div class="ex-note">Squeeze at peak contraction.</div></td></tr>
+          <tr><td><div class="ex-name">Barbell Curl</div></td><td><div class="ex-sets">4 × 10</div></td><td><span class="muscle-tag">Biceps</span></td><td><div class="ex-note">Go heavier than Pull A — priority session.</div></td></tr>
+          <tr><td><div class="ex-name">Incline Dumbbell Curl</div></td><td><div class="ex-sets">3 × 12</div></td><td><span class="muscle-tag">Biceps</span></td><td><div class="ex-note">Stretched position = high growth stimulus. Slow eccentric.</div></td></tr>
+          <tr><td><div class="ex-name">Hammer Curls</div></td><td><div class="ex-sets">3 × 10</div></td><td><span class="muscle-tag">Brachialis</span><span class="muscle-tag">Forearms</span></td><td><div class="ex-note">Adds thickness under the bicep.</div></td></tr>
+          <tr><td><div class="ex-name">Ab Work</div></td><td><div class="ex-sets">3 × 15</div></td><td><span class="muscle-tag">Core</span></td><td><div class="ex-note">Cable crunch or hanging leg raise.</div></td></tr>
+          <tr><td><div class="ex-name">Treadmill (Zone 2)</div></td><td><div class="ex-sets">20 min</div></td><td><span class="muscle-tag">Cardio</span></td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="note-box"><strong>Volume check:</strong> Biceps: ~13 sets across Pull A + Pull B. Chest: ~13 sets across Push A + Push B. Both solidly in the hypertrophy range.</div>
+    </div>
+  </div>
+
+  <!-- LEGS -->
+  <div id="legs" class="workout-card">
+    <div class="card-header" onclick="toggle(this)">
+      <div class="card-title-group">
+        <span class="type-badge badge-legs">Legs</span>
+        <div>
+          <div class="card-title">Leg Day — Quads / Hamstrings / Glutes / Calves</div>
+          <div class="card-meta">Day 8 · ~55 min lifting + 20 min cardio</div>
+        </div>
+      </div>
+      <span class="chevron">&#8964;</span>
+    </div>
+    <div class="card-body">
+      <div class="timing-bar">
+        <span>Warmup: <span class="t">5 min</span></span><span class="timing-sep">|</span>
+        <span>Work sets: <span class="t">~45 min</span></span><span class="timing-sep">|</span>
+        <span>Cardio: <span class="t">20 min Zone 2</span></span>
+      </div>
+      <table class="ex-table">
+        <thead><tr><th style="width:38%">Exercise</th><th>Sets × Reps</th><th>Muscles</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><div class="ex-name">Squat</div></td><td><div class="ex-sets">4 × 8</div></td><td><span class="muscle-tag">Quads</span><span class="muscle-tag">Glutes</span></td><td><div class="ex-note">Primary compound. Slightly lower rep range — load it.</div></td></tr>
+          <tr><td><div class="ex-name">Romanian Deadlift</div></td><td><div class="ex-sets">4 × 10</div></td><td><span class="muscle-tag">Hamstrings</span><span class="muscle-tag">Glutes</span></td><td><div class="ex-note">Hip hinge. Full hamstring stretch at bottom.</div></td></tr>
+          <tr><td><div class="ex-name">Leg Press</div></td><td><div class="ex-sets">3 × 12</div></td><td><span class="muscle-tag">Quads</span></td><td><div class="ex-note">Feet high = more glutes. Feet low = more quads.</div></td></tr>
+          <tr><td><div class="ex-name">Leg Curl (machine)</div></td><td><div class="ex-sets">3 × 12</div></td><td><span class="muscle-tag">Hamstrings</span></td><td><div class="ex-note">Isolation for hamstrings.</div></td></tr>
+          <tr><td><div class="ex-name">Standing Calf Raise</div></td><td><div class="ex-sets">4 × 15</div></td><td><span class="muscle-tag">Calves</span></td><td><div class="ex-note">Full ROM. Slow eccentric.</div></td></tr>
+          <tr><td><div class="ex-name">Treadmill (Zone 2)</div></td><td><div class="ex-sets">20 min</div></td><td><span class="muscle-tag">Cardio</span></td><td><div class="ex-note">Walking is fine here after heavy legs.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <br>
+  <div class="section-label">Progression</div>
+  <div class="principles-grid">
+    <div class="principle-card">
+      <div class="pc-label">Lifting progression</div>
+      <div class="pc-value">Add <strong>2.5–5 lbs</strong> when you hit the top of the rep range for all sets. Don't add weight until you've earned it.</div>
+    </div>
+    <div class="principle-card">
+      <div class="pc-label">VO2 max progression</div>
+      <div class="pc-value">After 4–6 weeks, <strong>increase the run speed</strong> during intervals rather than adding rounds. 4×4 is the proven structure — don't mess with it.</div>
+    </div>
+    <div class="principle-card">
+      <div class="pc-label">Deload</div>
+      <div class="pc-value">Every <strong>4–6 cycles</strong>, take one cycle at 50–60% volume. This is when adaptation actually consolidates. Don't skip it.</div>
+    </div>
+    <div class="principle-card">
+      <div class="pc-label">Calendar flexibility</div>
+      <div class="pc-value">The 9-day cycle doesn't align to weeks — that's intentional. Track by day number, not day of the week.</div>
+    </div>
+  </div>
+
+  <footer>PPL + VO2 Max Program · 9-Day Cycle · Adjust weights to your current level</footer>
+
+</div>
+<script>
+function toggle(header) {
+  const card = header.closest('.workout-card');
+  const body = card.querySelector('.card-body');
+  const isOpen = body.classList.contains('visible');
+  body.classList.toggle('visible', !isOpen);
+  header.classList.toggle('open', !isOpen);
+}
+function jumpTo(id) {
+  const card = document.getElementById(id);
+  if (!card) return;
+  const body = card.querySelector('.card-body');
+  const header = card.querySelector('.card-header');
+  if (!body.classList.contains('visible')) {
+    body.classList.add('visible');
+    header.classList.add('open');
+  }
+  setTimeout(() => {
+    const y = card.getBoundingClientRect().top + window.scrollY - 20;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }, 50);
+}
+document.querySelector('.card-header').click();
+</script>
+</body>
+</html>
