@@ -96,20 +96,12 @@ export default function CycleView({ onSelectDay }) {
               </p>
               <p style={{
                 fontFamily: '"Bebas Neue", sans-serif',
-                fontSize: 17,
-                letterSpacing: '0.05em',
+                fontSize: 14,
+                letterSpacing: '0.04em',
                 color: typeColor,
-                lineHeight: 1.1,
+                lineHeight: 1.2,
               }}>
-                {isDone ? '✓' : workout.type.split(' ')[0]}
-              </p>
-              <p style={{
-                fontFamily: '"DM Mono", monospace',
-                fontSize: 9,
-                color: isDone ? '#2a2a2a' : '#444',
-                marginTop: 2,
-              }}>
-                {workout.type.split(' ')[1] ?? (workout.rest ? 'Rest' : '')}
+                {isDone ? '✓' : workout.type}
               </p>
             </button>
           )

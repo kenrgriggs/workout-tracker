@@ -28,7 +28,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="noise-overlay" style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', backgroundColor: '#0a0a0a', minHeight: '100dvh' }}>
+      <div className="noise-overlay" />
       <div
         style={{
           minHeight: '100dvh',
@@ -36,7 +37,6 @@ export default function LoginPage() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '24px',
-          backgroundColor: '#0a0a0a',
           position: 'relative',
           zIndex: 1,
         }}
@@ -192,3 +192,4 @@ export default function LoginPage() {
     </div>
   )
 }
+

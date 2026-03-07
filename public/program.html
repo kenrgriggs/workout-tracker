@@ -32,7 +32,14 @@
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     line-height: 1.6;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2a2a #0a0a0a;
   }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0a0a0a; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
 
   .noise {
     position: fixed; inset: 0; pointer-events: none; z-index: 0;

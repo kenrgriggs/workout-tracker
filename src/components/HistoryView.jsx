@@ -10,6 +10,7 @@ function WorkoutDetail({ workout, onBack }) {
   const [editing, setEditing] = useState(false)
   const [editValues, setEditValues] = useState({})
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const color = WORKOUT_COLORS[workout.workout_type] ?? '#555'
   const isSkipped = workout.notes === 'SKIPPED'
 
@@ -59,6 +60,14 @@ function WorkoutDetail({ workout, onBack }) {
     setEditing(false)
   }
 
+  async function handleDelete() {
+    setSaving(true)
+    await supabase.from('sets').delete().eq('workout_id', workout.id)
+    await supabase.from('workouts').delete().eq('id', workout.id)
+    setSaving(false)
+    onBack()
+  }
+
   const grouped = sets.reduce((acc, s) => {
     if (!acc[s.exercise_name]) acc[s.exercise_name] = []
     acc[s.exercise_name].push(s)
@@ -87,47 +96,59 @@ function WorkoutDetail({ workout, onBack }) {
         >
           ← History
         </button>
-        {!isSkipped && !loading && sets.length > 0 && (
-          <button
-            onClick={editing ? saveEdit : startEdit}
-            disabled={saving}
-            style={{
-              background: 'none',
-              border: '1px solid #2a2a2a',
-              borderRadius: 6,
-              color: editing ? '#ff6b35' : '#6b6b6b',
-              fontFamily: '"DM Mono", monospace',
-              fontSize: 10,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              padding: '5px 12px',
-              marginBottom: 20,
-              opacity: saving ? 0.5 : 1,
-            }}
-          >
-            {saving ? 'Saving...' : editing ? 'Save' : 'Edit'}
-          </button>
-        )}
-        {editing && (
-          <button
-            onClick={() => setEditing(false)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#6b6b6b',
-              fontFamily: '"DM Mono", monospace',
-              fontSize: 10,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              padding: '5px 0 5px 8px',
-              marginBottom: 20,
-            }}
-          >
-            Cancel
-          </button>
-        )}
+
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 20 }}>
+          {confirmDelete ? (
+            <>
+              <button
+                onClick={handleDelete}
+                disabled={saving}
+                style={{ background: 'none', border: '1px solid #7f1d1d', borderRadius: 6, color: '#f87171', fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', padding: '5px 10px', opacity: saving ? 0.5 : 1 }}
+              >
+                {saving ? '...' : 'Confirm'}
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                style={{ background: 'none', border: 'none', color: '#6b6b6b', fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', padding: '5px 4px' }}
+              >
+                Cancel
+              </button>
+            </>
+          ) : editing ? (
+            <>
+              <button
+                onClick={saveEdit}
+                disabled={saving}
+                style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 6, color: '#ff6b35', fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', padding: '5px 12px', opacity: saving ? 0.5 : 1 }}
+              >
+                {saving ? '...' : 'Save'}
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                style={{ background: 'none', border: 'none', color: '#6b6b6b', fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', padding: '5px 4px' }}
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              {!loading && sets.length > 0 && (
+                <button
+                  onClick={startEdit}
+                  style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 6, color: '#6b6b6b', fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', padding: '5px 12px' }}
+                >
+                  Edit
+                </button>
+              )}
+              <button
+                onClick={() => setConfirmDelete(true)}
+                style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 6, color: '#6b6b6b', fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', padding: '5px 12px' }}
+              >
+                Delete
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Header */}

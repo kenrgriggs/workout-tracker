@@ -47,25 +47,19 @@
 
 /* Horizontal pill grid */
 .cycle-grid {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 6px;
 }
-.cycle-grid::-webkit-scrollbar { display: none; }
 
 .cycle-pill {
-  flex-shrink: 0;
-  min-width: 80px;
   border-radius: 8px;
-  padding: 10px 8px;
+  padding: 10px 4px;
   text-align: center;
   cursor: pointer;
-  scroll-snap-align: start;
   transition: transform 0.15s;
   border: 1px solid transparent;
+  min-width: 0;
 }
 .cycle-pill:active { transform: scale(0.95); }
 
