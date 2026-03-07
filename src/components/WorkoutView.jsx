@@ -2,60 +2,116 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { getWorkoutDay, WORKOUT_COLORS } from '../lib/workoutDefinitions'
 import { useAuth } from '../contexts/AuthContext'
+import { SectionLabel, TypeBadge, TimingBar, MuscleTags } from './ui'
 
-function SetRow({ set, lastSet, onChange, onToggle }) {
+function SetRow({ set, lastSet, onChange, onToggle, color }) {
   return (
-    <div
-      className="flex items-center gap-3 py-2.5"
-      style={{ opacity: set.completed ? 0.5 : 1 }}
-    >
-      <span className="text-gray-600 text-sm w-6 text-center flex-shrink-0">
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      padding: '8px 0',
+      opacity: set.completed ? 0.45 : 1,
+      borderBottom: '1px solid #161616',
+    }}>
+      {/* Set number */}
+      <span style={{
+        fontFamily: '"DM Mono", monospace',
+        fontSize: 11,
+        color: '#444',
+        width: 20,
+        textAlign: 'center',
+        flexShrink: 0,
+      }}>
         {set.setNumber}
       </span>
 
-      <div className="flex gap-2 flex-1">
-        <div className="flex-1">
-          <input
-            type="number"
-            placeholder={lastSet?.weight_lbs ?? 'lbs'}
-            value={set.weight ?? ''}
-            onChange={e => onChange(set.setNumber, 'weight', e.target.value)}
-            disabled={set.completed}
-            className="w-full px-3 py-2 rounded-lg text-center text-white text-sm focus:outline-none"
-            style={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}
-          />
-          {lastSet?.weight_lbs != null && (
-            <p className="text-center text-xs mt-1" style={{ color: '#404040' }}>
-              {lastSet.weight_lbs} lbs
-            </p>
-          )}
-        </div>
-
-        <div className="flex-1">
-          <input
-            type="number"
-            placeholder={lastSet?.reps ?? 'reps'}
-            value={set.reps ?? ''}
-            onChange={e => onChange(set.setNumber, 'reps', e.target.value)}
-            disabled={set.completed}
-            className="w-full px-3 py-2 rounded-lg text-center text-white text-sm focus:outline-none"
-            style={{ backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a' }}
-          />
-          {lastSet?.reps != null && (
-            <p className="text-center text-xs mt-1" style={{ color: '#404040' }}>
-              {lastSet.reps} reps
-            </p>
-          )}
-        </div>
+      {/* Weight */}
+      <div style={{ flex: 1 }}>
+        <input
+          type="number"
+          placeholder={lastSet?.weight_lbs != null ? String(lastSet.weight_lbs) : 'lbs'}
+          value={set.weight ?? ''}
+          onChange={e => onChange(set.setNumber, 'weight', e.target.value)}
+          disabled={set.completed}
+          style={{
+            width: '100%',
+            padding: '8px 10px',
+            borderRadius: 6,
+            background: '#161616',
+            border: '1px solid #252525',
+            color: '#f0f0f0',
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 14,
+            textAlign: 'center',
+            outline: 'none',
+          }}
+        />
+        {lastSet?.weight_lbs != null && (
+          <p style={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 9,
+            color: '#333',
+            textAlign: 'center',
+            marginTop: 3,
+          }}>
+            prev: {lastSet.weight_lbs}
+          </p>
+        )}
       </div>
 
+      {/* Reps */}
+      <div style={{ flex: 1 }}>
+        <input
+          type="number"
+          placeholder={lastSet?.reps != null ? String(lastSet.reps) : 'reps'}
+          value={set.reps ?? ''}
+          onChange={e => onChange(set.setNumber, 'reps', e.target.value)}
+          disabled={set.completed}
+          style={{
+            width: '100%',
+            padding: '8px 10px',
+            borderRadius: 6,
+            background: '#161616',
+            border: '1px solid #252525',
+            color: '#f0f0f0',
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 14,
+            textAlign: 'center',
+            outline: 'none',
+          }}
+        />
+        {lastSet?.reps != null && (
+          <p style={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 9,
+            color: '#333',
+            textAlign: 'center',
+            marginTop: 3,
+          }}>
+            prev: {lastSet.reps}
+          </p>
+        )}
+      </div>
+
+      {/* Complete toggle */}
       <button
         onClick={() => onToggle(set.setNumber)}
-        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all active:scale-90"
         style={{
-          backgroundColor: set.completed ? '#22c55e22' : '#1a1a1a',
+          width: 32,
+          height: 32,
+          borderRadius: 6,
+          background: set.completed ? '#22c55e18' : '#161616',
           border: `1px solid ${set.completed ? '#22c55e' : '#2a2a2a'}`,
-          color: set.completed ? '#22c55e' : '#4b5563',
+          color: set.completed ? '#22c55e' : '#444',
+          fontFamily: '"DM Mono", monospace',
+          fontSize: 12,
+          cursor: 'pointer',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.15s',
         }}
       >
         {set.completed ? '✓' : '○'}
@@ -65,33 +121,102 @@ function SetRow({ set, lastSet, onChange, onToggle }) {
 }
 
 function ExerciseCard({ exercise, lastSets, sets, onSetChange, onSetToggle, color }) {
+  const completedCount = sets.filter(s => s.completed).length
+
   return (
-    <div
-      className="rounded-2xl p-4 mb-3"
-      style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }}
-    >
-      <div className="flex items-center justify-between mb-1">
-        <h3 className="font-semibold text-white text-base">{exercise.name}</h3>
-        <span className="text-xs" style={{ color }}>
-          {exercise.sets}×{exercise.reps ?? '—'}
-        </span>
+    <div style={{
+      background: '#111111',
+      border: '1px solid #1f1f1f',
+      borderRadius: 10,
+      marginBottom: 10,
+      overflow: 'hidden',
+    }}>
+      {/* Card header */}
+      <div style={{ padding: '14px 14px 10px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+          <p style={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontWeight: 500,
+            fontSize: 15,
+            color: '#f0f0f0',
+            lineHeight: 1.3,
+            flex: 1,
+          }}>
+            {exercise.name}
+          </p>
+          <span style={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 13,
+            color,
+            flexShrink: 0,
+            fontWeight: 500,
+          }}>
+            {exercise.sets}×{exercise.reps ?? '—'}
+          </span>
+        </div>
+
+        {/* Muscles */}
+        {exercise.muscles && <div style={{ marginBottom: 4 }}><MuscleTags muscles={exercise.muscles} /></div>}
+
+        {/* Coaching note */}
+        {exercise.note && (
+          <p style={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 10,
+            color: '#555',
+            lineHeight: 1.5,
+          }}>
+            {exercise.note}
+          </p>
+        )}
+
+        {/* Progress indicator */}
+        {sets.length > 0 && completedCount > 0 && (
+          <div style={{ marginTop: 6, display: 'flex', gap: 4 }}>
+            {sets.map((s, i) => (
+              <div
+                key={i}
+                style={{
+                  height: 3,
+                  flex: 1,
+                  borderRadius: 2,
+                  background: s.completed ? color : '#2a2a2a',
+                  transition: 'background 0.2s',
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="flex gap-2 mb-2 px-6">
-        <p className="flex-1 text-center text-xs text-gray-700">Weight</p>
-        <p className="flex-1 text-center text-xs text-gray-700">Reps</p>
-        <div className="w-8" />
+      {/* Column headers */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '6px 14px',
+        borderTop: '1px solid #191919',
+        background: '#0d0d0d',
+      }}>
+        <span style={{ width: 20 }} />
+        <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444', textAlign: 'center' }}>LBS</span>
+        <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444', textAlign: 'center' }}>REPS</span>
+        <span style={{ width: 32 }} />
       </div>
 
-      {sets.map(set => (
-        <SetRow
-          key={set.setNumber}
-          set={set}
-          lastSet={lastSets?.[set.setNumber - 1]}
-          onChange={onSetChange}
-          onToggle={onSetToggle}
-        />
-      ))}
+      {/* Set rows */}
+      <div style={{ padding: '0 14px' }}>
+        {sets.map(set => (
+          <SetRow
+            key={set.setNumber}
+            set={set}
+            lastSet={lastSets?.[set.setNumber - 1]}
+            onChange={onSetChange}
+            onToggle={onSetToggle}
+            color={color}
+          />
+        ))}
+      </div>
     </div>
   )
 }
@@ -105,9 +230,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
   const [lastSets, setLastSets] = useState({})
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
-  const [existingWorkoutId, setExistingWorkoutId] = useState(null)
 
-  // Initialize sets from workout definition
   useEffect(() => {
     const initialSets = {}
     workout.exercises.forEach(ex => {
@@ -121,7 +244,6 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
     setSets(initialSets)
   }, [dayNumber])
 
-  // Load last session's data for reference
   useEffect(() => {
     async function fetchLastSession() {
       const { data: lastWorkout } = await supabase
@@ -207,65 +329,135 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
       })
     })
 
-    if (setRows.length > 0) {
-      await supabase.from('sets').insert(setRows)
-    }
+    if (setRows.length > 0) await supabase.from('sets').insert(setRows)
 
     setSaving(false)
     onFinish?.()
   }
 
+  const backBtn = (label = 'Back') => (
+    <button
+      onClick={onBack}
+      style={{
+        background: 'none',
+        border: 'none',
+        color: '#555',
+        fontFamily: '"DM Mono", monospace',
+        fontSize: 11,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        cursor: 'pointer',
+        padding: '0 0 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+      }}
+    >
+      ← {label}
+    </button>
+  )
+
   if (workout.rest) {
     return (
-      <div className="p-4 pb-24">
-        <button onClick={onBack} className="text-gray-500 text-sm mb-6 flex items-center gap-1">
-          ← Back
-        </button>
-        <div className="text-center pt-20">
-          <div className="text-6xl mb-4">😴</div>
-          <h2 className="text-2xl font-bold text-white mb-2">Rest Day</h2>
-          <p className="text-gray-500">Day {dayNumber} — Recovery</p>
-          <p className="text-gray-600 text-sm mt-4">Rest, hydrate, and let your body recover.</p>
+      <div style={{ padding: '20px 16px 100px' }}>
+        {backBtn()}
+        <div style={{ textAlign: 'center', paddingTop: 60 }}>
+          <p style={{ fontSize: 56, marginBottom: 16 }}>😴</p>
+          <p style={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 10,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            color: '#555',
+            marginBottom: 8,
+          }}>
+            Day {dayNumber}
+          </p>
+          <h2 style={{
+            fontFamily: '"Bebas Neue", sans-serif',
+            fontSize: 48,
+            color: '#444',
+            letterSpacing: '0.04em',
+            marginBottom: 12,
+          }}>
+            Rest Day
+          </h2>
+          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#444' }}>
+            Recovery · Hydrate · Let the body adapt
+          </p>
         </div>
       </div>
     )
   }
 
   if (workout.notesOnly) {
+    const ex = workout.exercises[0]
     return (
-      <div className="p-4 pb-24">
-        <button onClick={onBack} className="text-gray-500 text-sm mb-6 flex items-center gap-1">
-          ← Back
-        </button>
-
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="text-sm font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${color}22`, color }}>
-              Day {dayNumber}
-            </span>
-          </div>
-          <h2 className="text-2xl font-bold" style={{ color }}>{workout.type}</h2>
-          <p className="text-gray-500 text-sm mt-1">{workout.exercises[0]?.name}
-            {workout.exercises[0]?.note && ` — ${workout.exercises[0].note}`}
-          </p>
+      <div style={{ padding: '20px 16px 100px' }}>
+        {backBtn()}
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: 6 }}>
+          Day {dayNumber}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <TypeBadge type={workout.type} />
         </div>
+        <h2 style={{
+          fontFamily: '"Bebas Neue", sans-serif',
+          fontSize: 36,
+          letterSpacing: '0.04em',
+          color,
+          lineHeight: 1,
+          marginBottom: 4,
+        }}>
+          {ex?.name ?? workout.type}
+        </h2>
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#555', marginBottom: 20 }}>
+          {ex?.note}
+        </p>
 
-        <div className="rounded-2xl p-4 mb-4" style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }}>
-          <label className="text-gray-500 text-sm block mb-2">Session Notes</label>
+        <SectionLabel>Session Notes</SectionLabel>
+        <div style={{
+          background: '#111111',
+          border: '1px solid #1f1f1f',
+          borderRadius: 10,
+          padding: '14px',
+          marginBottom: 16,
+        }}>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            placeholder="How did it go? Distance, pace, heart rate..."
-            rows={6}
-            className="w-full bg-transparent text-white text-sm focus:outline-none resize-none placeholder-gray-700"
+            placeholder="Distance, pace, heart rate, how it felt..."
+            rows={7}
+            style={{
+              width: '100%',
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              color: '#f0f0f0',
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: 14,
+              resize: 'none',
+              lineHeight: 1.6,
+            }}
           />
         </div>
 
         <button
           onClick={handleFinish}
           disabled={saving}
-          className="w-full py-4 rounded-2xl font-bold text-black text-base transition-opacity disabled:opacity-50 active:scale-95"
-          style={{ backgroundColor: color }}
+          style={{
+            width: '100%',
+            padding: 16,
+            borderRadius: 8,
+            background: color,
+            border: 'none',
+            color: '#000',
+            fontFamily: '"Bebas Neue", sans-serif',
+            fontSize: 22,
+            letterSpacing: '0.06em',
+            cursor: 'pointer',
+            opacity: saving ? 0.5 : 1,
+          }}
         >
           {saving ? 'Saving...' : 'Finish Workout'}
         </button>
@@ -273,29 +465,45 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
     )
   }
 
-  const totalSets = Object.values(sets).flat().length
-  const completedSets = Object.values(sets).flat().filter(s => s.completed).length
+  const allSets = Object.values(sets).flat()
+  const totalSets = allSets.length
+  const completedSets = allSets.filter(s => s.completed).length
 
   return (
-    <div className="p-4 pb-24">
-      <button onClick={onBack} className="text-gray-500 text-sm mb-6 flex items-center gap-1">
-        ← Back
-      </button>
+    <div style={{ padding: '20px 16px 100px' }}>
+      {backBtn()}
 
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <span className="text-sm font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${color}22`, color }}>
-            Day {dayNumber}
+      {/* Header */}
+      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: 6 }}>
+        Day {dayNumber}
+        {totalSets > 0 && (
+          <span style={{ marginLeft: 12 }}>
+            {completedSets}/{totalSets} sets
           </span>
-          {totalSets > 0 && (
-            <span className="text-sm text-gray-600">
-              {completedSets}/{totalSets} sets
-            </span>
-          )}
-        </div>
-        <h2 className="text-2xl font-bold" style={{ color }}>{workout.type}</h2>
+        )}
+      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+        <TypeBadge type={workout.type} />
       </div>
+      <h2 style={{
+        fontFamily: '"Bebas Neue", sans-serif',
+        fontSize: 34,
+        letterSpacing: '0.04em',
+        color,
+        lineHeight: 1,
+        marginBottom: 2,
+      }}>
+        {workout.type} — {workout.subtitle}
+      </h2>
+      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: '#555', marginBottom: 16, letterSpacing: '0.04em' }}>
+        {workout.duration}
+      </p>
 
+      {/* Timing bar */}
+      <TimingBar timing={workout.timing} />
+
+      {/* Exercises */}
+      <SectionLabel>Exercises</SectionLabel>
       {workout.exercises.map(exercise => (
         <ExerciseCard
           key={exercise.name}
@@ -308,22 +516,51 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
         />
       ))}
 
-      <div className="rounded-2xl p-4 mb-4" style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }}>
-        <label className="text-gray-500 text-sm block mb-2">Notes</label>
+      {/* Notes */}
+      <SectionLabel style={{ marginTop: 8 }}>Notes</SectionLabel>
+      <div style={{
+        background: '#111111',
+        border: '1px solid #1f1f1f',
+        borderRadius: 10,
+        padding: '14px',
+        marginBottom: 16,
+      }}>
         <textarea
           value={notes}
           onChange={e => setNotes(e.target.value)}
           placeholder="How did this session feel?"
           rows={3}
-          className="w-full bg-transparent text-white text-sm focus:outline-none resize-none placeholder-gray-700"
+          style={{
+            width: '100%',
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            color: '#f0f0f0',
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: 14,
+            resize: 'none',
+            lineHeight: 1.6,
+          }}
         />
       </div>
 
       <button
         onClick={handleFinish}
         disabled={saving}
-        className="w-full py-4 rounded-2xl font-bold text-black text-base transition-opacity disabled:opacity-50 active:scale-95"
-        style={{ backgroundColor: color }}
+        style={{
+          width: '100%',
+          padding: 16,
+          borderRadius: 8,
+          background: color,
+          border: 'none',
+          color: '#000',
+          fontFamily: '"Bebas Neue", sans-serif',
+          fontSize: 22,
+          letterSpacing: '0.06em',
+          cursor: 'pointer',
+          opacity: saving ? 0.5 : 1,
+          transition: 'opacity 0.15s',
+        }}
       >
         {saving ? 'Saving...' : 'Finish Workout'}
       </button>

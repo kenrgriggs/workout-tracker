@@ -1,17 +1,24 @@
 export default function BottomNav({ activeTab, onTabChange }) {
   const tabs = [
-    { id: 'cycle', label: 'Cycle', icon: '⬡' },
-    { id: 'history', label: 'History', icon: '📋' },
+    { id: 'cycle', label: 'Cycle', icon: '◈' },
+    { id: 'history', label: 'History', icon: '▤' },
   ]
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 flex items-center justify-around px-6 pb-safe"
       style={{
-        backgroundColor: '#0d0d0d',
-        borderTop: '1px solid #1f1f1f',
-        height: '68px',
-        paddingBottom: 'max(env(safe-area-inset-bottom), 8px)',
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        display: 'flex',
+        alignItems: 'center',
+        backgroundColor: '#0a0a0acc',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderTop: '1px solid #191919',
+        height: 64,
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
       {tabs.map(tab => {
@@ -20,14 +27,37 @@ export default function BottomNav({ activeTab, onTabChange }) {
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className="flex flex-col items-center gap-1 flex-1 transition-opacity"
-            style={{ opacity: isActive ? 1 : 0.4 }}
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              opacity: isActive ? 1 : 0.35,
+              transition: 'opacity 0.15s',
+              height: '100%',
+              WebkitTapHighlightColor: 'transparent',
+            }}
           >
-            <span className="text-xl leading-none">{tab.icon}</span>
-            <span
-              className="text-xs font-medium"
-              style={{ color: isActive ? '#ff6b35' : '#9ca3af' }}
-            >
+            <span style={{
+              fontFamily: '"DM Mono", monospace',
+              fontSize: 16,
+              color: isActive ? '#ff6b35' : '#888',
+              lineHeight: 1,
+            }}>
+              {tab.icon}
+            </span>
+            <span style={{
+              fontFamily: '"Bebas Neue", sans-serif',
+              fontSize: 14,
+              letterSpacing: '0.08em',
+              color: isActive ? '#ff6b35' : '#888',
+              lineHeight: 1,
+            }}>
               {tab.label}
             </span>
           </button>

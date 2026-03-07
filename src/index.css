@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --font-display: "Bebas Neue", sans-serif;
+  --font-mono: "DM Mono", monospace;
+  --font-sans: "DM Sans", sans-serif;
+}
+
 @layer base {
   * {
     -webkit-tap-highlight-color: transparent;
@@ -9,11 +15,13 @@
   body {
     margin: 0;
     background-color: #0a0a0a;
-    color: #f5f5f5;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #f0f0f0;
+    font-family: "DM Sans", sans-serif;
     min-height: 100dvh;
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+    line-height: 1.6;
   }
 
   input[type="number"] {
@@ -25,4 +33,101 @@
     -webkit-appearance: none;
     margin: 0;
   }
+}
+
+/* Noise overlay */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.35;
+}
+
+/* Horizontal pill grid */
+.cycle-grid {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.cycle-grid::-webkit-scrollbar { display: none; }
+
+.cycle-pill {
+  flex-shrink: 0;
+  min-width: 80px;
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform 0.15s;
+  border: 1px solid transparent;
+}
+.cycle-pill:active { transform: scale(0.95); }
+
+/* Section label */
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #555;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #2a2a2a;
+}
+
+/* Timing bar */
+.timing-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: #161616;
+  border-radius: 6px;
+  border: 1px solid #222;
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.timing-sep {
+  color: #2a2a2a;
+  padding: 0 4px;
+}
+
+/* Type badge */
+.type-badge {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Muscle tag */
+.muscle-tag {
+  display: inline-block;
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #1a1a1a;
+  color: #555;
+  margin-right: 4px;
+  margin-bottom: 2px;
 }

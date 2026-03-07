@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { WORKOUT_COLORS } from '../lib/workoutDefinitions'
 import { useAuth } from '../contexts/AuthContext'
+import { SectionLabel, TypeBadge } from './ui'
 
 function WorkoutDetail({ workout, onBack }) {
   const [sets, setSets] = useState([])
   const [loading, setLoading] = useState(true)
-  const color = WORKOUT_COLORS[workout.workout_type] ?? '#6b7280'
+  const color = WORKOUT_COLORS[workout.workout_type] ?? '#555'
 
   useEffect(() => {
     async function fetchSets() {
@@ -30,42 +31,126 @@ function WorkoutDetail({ workout, onBack }) {
   }, {})
 
   return (
-    <div className="p-4 pb-24">
-      <button onClick={onBack} className="text-gray-500 text-sm mb-6 flex items-center gap-1">
+    <div style={{ padding: '20px 16px 100px' }}>
+      <button
+        onClick={onBack}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: '#555',
+          fontFamily: '"DM Mono", monospace',
+          fontSize: 11,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          cursor: 'pointer',
+          padding: '0 0 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}
+      >
         ← History
       </button>
 
-      <div className="mb-6">
-        <p className="text-gray-500 text-sm">Day {workout.day_number}</p>
-        <h2 className="text-2xl font-bold" style={{ color }}>{workout.workout_type}</h2>
-        <p className="text-gray-600 text-sm mt-1">
-          {new Date(workout.completed_at).toLocaleDateString('en-US', {
-            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-          })}
-        </p>
+      {/* Header */}
+      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: 6 }}>
+        Day {workout.day_number}
+      </p>
+      <div style={{ marginBottom: 6 }}>
+        <TypeBadge type={workout.workout_type} />
       </div>
+      <h2 style={{
+        fontFamily: '"Bebas Neue", sans-serif',
+        fontSize: 32,
+        letterSpacing: '0.04em',
+        color,
+        lineHeight: 1,
+        marginBottom: 4,
+      }}>
+        {workout.workout_type}
+      </h2>
+      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#555', marginBottom: 24 }}>
+        {new Date(workout.completed_at).toLocaleDateString('en-US', {
+          weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+        })}
+      </p>
 
       {loading ? (
-        <p className="text-gray-600 text-center py-8">Loading...</p>
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#555', textAlign: 'center', padding: '32px 0' }}>
+          Loading...
+        </p>
       ) : (
         <>
+          <SectionLabel>Sets</SectionLabel>
           {Object.entries(grouped).map(([name, exerciseSets]) => (
             <div
               key={name}
-              className="rounded-2xl p-4 mb-3"
-              style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }}
+              style={{
+                background: '#111111',
+                border: '1px solid #1f1f1f',
+                borderRadius: 10,
+                marginBottom: 10,
+                overflow: 'hidden',
+              }}
             >
-              <h3 className="font-semibold text-white mb-3">{name}</h3>
+              {/* Exercise header */}
+              <div style={{
+                padding: '10px 14px',
+                borderBottom: '1px solid #191919',
+                background: '#0d0d0d',
+              }}>
+                <p style={{
+                  fontFamily: '"DM Mono", monospace',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: '#888',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                }}>
+                  {name}
+                </p>
+              </div>
+
+              {/* Column headers */}
+              <div style={{
+                display: 'flex',
+                padding: '6px 14px',
+                gap: 8,
+                borderBottom: '1px solid #161616',
+              }}>
+                <span style={{ width: 24, fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#333' }}>SET</span>
+                <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#333' }}>WEIGHT</span>
+                <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#333' }}>REPS</span>
+                <span style={{ width: 24, fontFamily: '"DM Mono", monospace', fontSize: 9, color: '#333', textAlign: 'center' }}>✓</span>
+              </div>
+
+              {/* Set rows */}
               {exerciseSets.map(s => (
-                <div key={s.id} className="flex items-center gap-3 py-1.5">
-                  <span className="text-gray-600 text-sm w-6 text-center">{s.set_number}</span>
-                  <span className="flex-1 text-sm text-gray-300">
+                <div
+                  key={s.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '8px 14px',
+                    borderBottom: '1px solid #141414',
+                    opacity: s.completed ? 1 : 0.6,
+                  }}
+                >
+                  <span style={{ width: 24, fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#444' }}>{s.set_number}</span>
+                  <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 13, color: '#c0c0c0' }}>
                     {s.weight_lbs != null ? `${s.weight_lbs} lbs` : '—'}
                   </span>
-                  <span className="flex-1 text-sm text-gray-300">
+                  <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 13, color: '#c0c0c0' }}>
                     {s.reps != null ? `${s.reps} reps` : '—'}
                   </span>
-                  <span style={{ color: s.completed ? '#22c55e' : '#4b5563' }} className="text-sm">
+                  <span style={{
+                    width: 24,
+                    fontFamily: '"DM Mono", monospace',
+                    fontSize: 12,
+                    color: s.completed ? '#22c55e' : '#333',
+                    textAlign: 'center',
+                  }}>
                     {s.completed ? '✓' : '○'}
                   </span>
                 </div>
@@ -74,13 +159,19 @@ function WorkoutDetail({ workout, onBack }) {
           ))}
 
           {workout.notes && (
-            <div
-              className="rounded-2xl p-4"
-              style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }}
-            >
-              <p className="text-gray-500 text-xs mb-1">Notes</p>
-              <p className="text-gray-300 text-sm">{workout.notes}</p>
-            </div>
+            <>
+              <SectionLabel>Notes</SectionLabel>
+              <div style={{
+                background: '#111111',
+                border: '1px solid #1f1f1f',
+                borderRadius: 10,
+                padding: 14,
+              }}>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 14, color: '#bbb', lineHeight: 1.6 }}>
+                  {workout.notes}
+                </p>
+              </div>
+            </>
           )}
         </>
       )}
@@ -113,47 +204,112 @@ export default function HistoryView() {
   }
 
   return (
-    <div className="p-4 pb-24">
-      <h2 className="text-xl font-bold text-white mb-6">History</h2>
+    <div style={{ padding: '20px 16px 100px' }}>
+      <p style={{
+        fontFamily: '"DM Mono", monospace',
+        fontSize: 10,
+        letterSpacing: '0.15em',
+        textTransform: 'uppercase',
+        color: '#555',
+        marginBottom: 4,
+      }}>
+        {loading ? '...' : `${workouts.length} session${workouts.length !== 1 ? 's' : ''} logged`}
+      </p>
+      <h2 style={{
+        fontFamily: '"Bebas Neue", sans-serif',
+        fontSize: 36,
+        letterSpacing: '0.04em',
+        color: '#f0f0f0',
+        lineHeight: 1,
+        marginBottom: 24,
+      }}>
+        History
+      </h2>
 
       {loading ? (
-        <p className="text-gray-600 text-center py-8">Loading...</p>
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#555', textAlign: 'center', padding: '32px 0' }}>
+          Loading...
+        </p>
       ) : workouts.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-gray-600">No workouts logged yet.</p>
-          <p className="text-gray-700 text-sm mt-1">Complete your first session to see it here.</p>
+        <div style={{ textAlign: 'center', padding: '60px 0' }}>
+          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#444', letterSpacing: '0.08em' }}>
+            No workouts logged yet.
+          </p>
+          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: '#333', marginTop: 6 }}>
+            Complete your first session to see it here.
+          </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {workouts.map(workout => {
-            const color = WORKOUT_COLORS[workout.workout_type] ?? '#6b7280'
-            const date = new Date(workout.completed_at)
-            return (
-              <button
-                key={workout.id}
-                onClick={() => setSelected(workout)}
-                className="w-full text-left rounded-2xl p-4 transition-all active:scale-95"
-                style={{ backgroundColor: '#111111', border: '1px solid #1f1f1f' }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0"
-                    style={{ backgroundColor: `${color}22`, color }}
-                  >
-                    {workout.day_number}
+        <>
+          <SectionLabel>Sessions</SectionLabel>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {workouts.map(workout => {
+              const color = WORKOUT_COLORS[workout.workout_type] ?? '#555'
+              const date = new Date(workout.completed_at)
+              return (
+                <button
+                  key={workout.id}
+                  onClick={() => setSelected(workout)}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    background: '#111111',
+                    border: '1px solid #1f1f1f',
+                    borderRadius: 10,
+                    padding: '14px 16px',
+                    cursor: 'pointer',
+                    transition: 'transform 0.15s',
+                  }}
+                  onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
+                  onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                  onTouchStart={e => e.currentTarget.style.transform = 'scale(0.98)'}
+                  onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {/* Day badge */}
+                    <div style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 8,
+                      background: `${color}20`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      fontFamily: '"DM Mono", monospace',
+                      fontSize: 13,
+                      color,
+                      fontWeight: 500,
+                    }}>
+                      {workout.day_number}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ marginBottom: 3 }}>
+                        <TypeBadge type={workout.workout_type} />
+                      </div>
+                      <p style={{
+                        fontFamily: '"Bebas Neue", sans-serif',
+                        fontSize: 19,
+                        letterSpacing: '0.03em',
+                        color: '#f0f0f0',
+                        lineHeight: 1,
+                        marginBottom: 2,
+                      }}>
+                        {workout.workout_type}
+                      </p>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: '#555' }}>
+                        {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+
+                    <span style={{ color: '#333', fontSize: 18 }}>›</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-white">{workout.workout_type}</p>
-                    <p className="text-gray-600 text-sm">
-                      {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                    </p>
-                  </div>
-                  <span className="text-gray-700 text-sm">›</span>
-                </div>
-              </button>
-            )
-          })}
-        </div>
+                </button>
+              )
+            })}
+          </div>
+        </>
       )}
     </div>
   )
