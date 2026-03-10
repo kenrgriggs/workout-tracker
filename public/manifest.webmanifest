@@ -1,0 +1,16 @@
+{
+  "name": "Workout Tracker",
+  "short_name": "Workout",
+  "description": "Track workouts, meals, and training progress.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ]
+}

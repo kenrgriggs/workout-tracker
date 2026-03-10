@@ -1,35 +1,24 @@
 import MealView from './MealView'
 import MealHistory from './MealHistory'
-import { SectionLabel } from './ui'
 
 export default function NutritionView({ activeTab }) {
+  if (activeTab === 'log') return <MealView />
+  if (activeTab === 'history') return <MealHistory />
+
+  const tabMeta = {
+    program: { title: 'Nutrition Program', body: 'Coming soon: structured meal plans, macro targets, and weekly templates.' },
+    analytics: { title: 'Nutrition Analytics', body: 'Coming soon: nutrition trends, calorie graphs, and macro breakdowns.' },
+  }
+  const meta = tabMeta[activeTab]
+
   return (
     <div className="page">
       <div className="page-header">
-        <p className="page-subtitle">Nutrition</p>
-        <h1 className="page-title">Meal Tracker</h1>
+        <h1 className="page-title">{meta?.title ?? ''}</h1>
       </div>
-
-      {activeTab === 'log' && <MealView />}
-      {activeTab === 'history' && <MealHistory />}
-
-      {activeTab === 'program' && (
-        <div style={{ paddingBottom: 100 }}>
-          <SectionLabel>Nutrition Program</SectionLabel>
-          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#6b6b6b', padding: '18px 0' }}>
-            Coming soon: structured meal plans, macro targets, and weekly templates.
-          </p>
-        </div>
-      )}
-
-      {activeTab === 'analytics' && (
-        <div style={{ paddingBottom: 100 }}>
-          <SectionLabel>Analytics</SectionLabel>
-          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#6b6b6b', padding: '18px 0' }}>
-            Coming soon: nutrition trends, calorie graphs, and macro breakdowns.
-          </p>
-        </div>
-      )}
+      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 13, color: '#6b6b6b' }}>
+        {meta?.body}
+      </p>
     </div>
   )
 }

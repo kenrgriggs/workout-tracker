@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/useAuth'
 import { SectionLabel } from './ui'
 
 export default function MealView() {
@@ -17,8 +17,12 @@ export default function MealView() {
     fats: '',
     notes: '',
   })
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const blurTimeout = useRef(null)
 
-  async function fetchMeals() {
+  const fetchMeals = useCallback(async () => {
+    if (!user) return
+
     setLoading(true)
     setError('')
 
@@ -36,13 +40,13 @@ export default function MealView() {
     }
 
     setLoading(false)
-  }
+  }, [user])
 
   useEffect(() => {
-    if (user?.id) {
-      fetchMeals()
-    }
-  }, [user?.id])
+    if (!user?.id) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchMeals()
+  }, [user?.id, fetchMeals])
 
   const totals = useMemo(() => {
     return meals.reduce(
@@ -57,6 +61,40 @@ export default function MealView() {
     )
   }, [meals])
 
+  // Deduplicated meal suggestions — most recent occurrence per unique name
+  const mealSuggestions = useMemo(() => {
+    const seen = new Set()
+    const result = []
+    for (const meal of meals) {
+      const key = meal.name.toLowerCase()
+      if (!seen.has(key)) {
+        seen.add(key)
+        result.push(meal)
+      }
+    }
+    return result
+  }, [meals])
+
+  const filteredSuggestions = useMemo(() => {
+    if (!form.name.trim()) return []
+    const query = form.name.toLowerCase()
+    return mealSuggestions
+      .filter(m => m.name.toLowerCase().includes(query))
+      .slice(0, 7)
+  }, [form.name, mealSuggestions])
+
+  function selectSuggestion(meal) {
+    setForm({
+      name: meal.name,
+      calories: meal.calories != null ? String(meal.calories) : '',
+      protein: meal.protein != null ? String(meal.protein) : '',
+      carbs: meal.carbs != null ? String(meal.carbs) : '',
+      fats: meal.fats != null ? String(meal.fats) : '',
+      notes: meal.notes ?? '',
+    })
+    setShowSuggestions(false)
+  }
+
   function updateForm(field, value) {
     setForm(prev => ({ ...prev, [field]: value }))
   }
@@ -66,7 +104,7 @@ export default function MealView() {
     if (!form.name.trim()) return
 
     setSaving(true)
-    const { data, error } = await supabase.from('meals').insert({
+    const { error } = await supabase.from('meals').insert({
       user_id: user.id,
       name: form.name.trim(),
       calories: form.calories ? parseInt(form.calories, 10) : 0,
@@ -93,17 +131,17 @@ export default function MealView() {
     setSaving(false)
   }
 
+  const showDropdown = showSuggestions && filteredSuggestions.length > 0
+
   return (
     <div className="page">
       <div className="page-header">
-        <p className="page-subtitle">Nutrition log</p>
-        <h1 className="page-title">Meal Tracker</h1>
-
+        <h1 className="page-title">Nutrition Log</h1>
         {error && (
           <div className="alert" style={{ marginTop: 12 }}>
             {error}
             <small>
-              Make sure you’ve run the database migration in Supabase (see README).
+              Make sure you've run the database migration in Supabase (see README).
             </small>
           </div>
         )}
@@ -131,12 +169,68 @@ export default function MealView() {
 
       <SectionLabel>Add meal</SectionLabel>
       <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
-        <input
-          className="input"
-          value={form.name}
-          onChange={(e) => updateForm('name', e.target.value)}
-          placeholder="Meal / food name"
-        />
+        {/* Name field with autocomplete */}
+        <div style={{ position: 'relative' }}>
+          <input
+            className="input"
+            value={form.name}
+            onChange={(e) => updateForm('name', e.target.value)}
+            onFocus={() => {
+              clearTimeout(blurTimeout.current)
+              setShowSuggestions(true)
+            }}
+            onBlur={() => {
+              blurTimeout.current = setTimeout(() => setShowSuggestions(false), 150)
+            }}
+            placeholder="Meal / food name"
+            style={{ borderRadius: showDropdown ? '12px 12px 0 0' : undefined }}
+          />
+          {showDropdown && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              zIndex: 50,
+              background: '#111',
+              border: '1px solid #2a2a2a',
+              borderTop: 'none',
+              borderRadius: '0 0 12px 12px',
+              overflow: 'hidden',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            }}>
+              {filteredSuggestions.map((meal, i) => (
+                <button
+                  key={meal.id}
+                  onMouseDown={() => selectSuggestion(meal)}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '10px 14px',
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: i < filteredSuggestions.length - 1 ? '1px solid #1e1e1e' : 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                >
+                  <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 14, color: '#f0f0f0' }}>
+                    {meal.name}
+                  </span>
+                  <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 12, color: '#555', flexShrink: 0 }}>
+                    {meal.calories != null ? `${meal.calories} kcal` : ''}
+                    {meal.protein != null ? ` · ${meal.protein}g protein` : ''}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
           <input
@@ -189,11 +283,11 @@ export default function MealView() {
 
       <SectionLabel>Recent meals</SectionLabel>
       {loading ? (
-        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#6b6b6b', textAlign: 'center', padding: '28px 0' }}>
+        <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 13, color: '#6b6b6b', textAlign: 'center', padding: '28px 0' }}>
           Loading…
         </p>
       ) : meals.length === 0 ? (
-        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#6b6b6b', textAlign: 'center', padding: '28px 0' }}>
+        <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 13, color: '#6b6b6b', textAlign: 'center', padding: '28px 0' }}>
           No meals yet. Add your first one above.
         </p>
       ) : (
@@ -202,19 +296,19 @@ export default function MealView() {
             <div key={meal.id} className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 18, margin: 0, lineHeight: 1.1 }}>{meal.name}</p>
-                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#6b6b6b', marginTop: 4 }}>
+                  <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 20, margin: 0, lineHeight: 1.1 }}>{meal.name}</p>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 12, color: '#6b6b6b', marginTop: 4 }}>
                     {new Date(meal.consumed_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
                   {meal.notes && (
-                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#888', marginTop: 8, whiteSpace: 'pre-wrap' }}>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 13, color: '#888', marginTop: 8, whiteSpace: 'pre-wrap' }}>
                       {meal.notes}
                     </p>
                   )}
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 18, margin: 0 }}>{meal.calories ?? 0}</p>
-                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: '#6b6b6b', marginTop: 4 }}>kcal</p>
+                  <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 20, margin: 0 }}>{meal.calories ?? 0}</p>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 12, color: '#6b6b6b', marginTop: 2 }}>kcal</p>
                   <button
                     onClick={() => handleDeleteMeal(meal.id)}
                     disabled={saving}

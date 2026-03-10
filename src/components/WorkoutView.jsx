@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { getWorkoutDay, WORKOUT_COLORS } from '../lib/workoutDefinitions'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/useAuth'
+import { useSettings } from '../contexts/useSettings'
+import { lbsToUnit, unitToLbs, WEIGHT_UNITS } from '../lib/units'
 import { SectionLabel, TypeBadge, TimingBar, MuscleTags } from './ui'
 
-function SetRow({ set, lastSet, onChange, onToggle, color }) {
+function SetRow({ set, lastSet, onChange, onToggle, onRemove, canRemove, weightUnit }) {
   return (
     <div style={{
       display: 'flex',
@@ -14,11 +16,32 @@ function SetRow({ set, lastSet, onChange, onToggle, color }) {
       opacity: set.completed ? 0.45 : 1,
       borderBottom: '1px solid #161616',
     }}>
+      {canRemove && (
+        <button
+          onClick={() => onRemove(set.setNumber)}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 6,
+            background: 'transparent',
+            border: '1px solid #7f1d1d',
+            color: '#f87171',
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 14,
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+          title="Remove set"
+        >
+          −
+        </button>
+      )}
+
       {/* Set number */}
       <span style={{
         fontFamily: '"DM Mono", monospace',
-        fontSize: 11,
-        color: '#444',
+        fontSize: 13,
+        color: '#555',
         width: 20,
         textAlign: 'center',
         flexShrink: 0,
@@ -30,8 +53,8 @@ function SetRow({ set, lastSet, onChange, onToggle, color }) {
       <div style={{ flex: 1 }}>
         <input
           type="number"
-          placeholder={lastSet?.weight_lbs != null ? String(lastSet.weight_lbs) : 'lbs'}
-          value={set.weight ?? ''}
+          placeholder={lastSet?.weight_lbs != null ? String(lbsToUnit(lastSet.weight_lbs, weightUnit)) : (weightUnit === WEIGHT_UNITS.KG ? 'kg' : 'lbs')}
+          value={set.weight !== '' ? String(lbsToUnit(set.weight, weightUnit)) : ''}
           onChange={e => onChange(set.setNumber, 'weight', e.target.value)}
           disabled={set.completed}
           style={{
@@ -50,12 +73,12 @@ function SetRow({ set, lastSet, onChange, onToggle, color }) {
         {lastSet?.weight_lbs != null && (
           <p style={{
             fontFamily: '"DM Mono", monospace',
-            fontSize: 9,
-            color: '#333',
+            fontSize: 11,
+            color: '#555',
             textAlign: 'center',
             marginTop: 3,
           }}>
-            prev: {lastSet.weight_lbs}
+            prev: {lbsToUnit(lastSet.weight_lbs, weightUnit)}
           </p>
         )}
       </div>
@@ -84,8 +107,8 @@ function SetRow({ set, lastSet, onChange, onToggle, color }) {
         {lastSet?.reps != null && (
           <p style={{
             fontFamily: '"DM Mono", monospace',
-            fontSize: 9,
-            color: '#333',
+            fontSize: 11,
+            color: '#555',
             textAlign: 'center',
             marginTop: 3,
           }}>
@@ -105,7 +128,7 @@ function SetRow({ set, lastSet, onChange, onToggle, color }) {
           border: `1px solid ${set.completed ? '#22c55e' : '#2a2a2a'}`,
           color: set.completed ? '#22c55e' : '#444',
           fontFamily: '"DM Mono", monospace',
-          fontSize: 12,
+          fontSize: 14,
           cursor: 'pointer',
           flexShrink: 0,
           display: 'flex',
@@ -116,28 +139,33 @@ function SetRow({ set, lastSet, onChange, onToggle, color }) {
       >
         {set.completed ? '✓' : '○'}
       </button>
+
     </div>
   )
 }
 
-function ExerciseCard({ exercise, lastSets, sets, onSetChange, onSetToggle, color }) {
+function ExerciseCard({ exercise, lastSets, sets, onSetChange, onSetToggle, onAddSet, onRemoveSet, weightUnit, color }) {
   const completedCount = sets.filter(s => s.completed).length
+
+  const lastSet = lastSets && lastSets.length ? lastSets[lastSets.length - 1] : null
+  const lastWeightDisplay = lastSet?.weight_lbs != null ? lbsToUnit(lastSet.weight_lbs, weightUnit) : '--'
+  const lastRepsDisplay = lastSet?.reps != null ? lastSet.reps : '--'
 
   return (
     <div style={{
-      background: '#111111',
-      border: '1px solid #1f1f1f',
-      borderRadius: 10,
+      background: '#0d0d0d',
+      border: '1px solid #1a1a1a',
+      borderRadius: 12,
       marginBottom: 10,
       overflow: 'hidden',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
     }}>
       {/* Card header */}
       <div style={{ padding: '14px 14px 10px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
           <p style={{
-            fontFamily: '"DM Sans", sans-serif',
-            fontWeight: 500,
-            fontSize: 15,
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 17,
             color: '#f0f0f0',
             lineHeight: 1.3,
             flex: 1,
@@ -146,7 +174,7 @@ function ExerciseCard({ exercise, lastSets, sets, onSetChange, onSetToggle, colo
           </p>
           <span style={{
             fontFamily: '"DM Mono", monospace',
-            fontSize: 13,
+            fontSize: 15,
             color,
             flexShrink: 0,
             fontWeight: 500,
@@ -154,6 +182,13 @@ function ExerciseCard({ exercise, lastSets, sets, onSetChange, onSetToggle, colo
             {exercise.sets}×{exercise.reps ?? '—'}
           </span>
         </div>
+        <p style={{
+          fontFamily: '"DM Mono", monospace',
+          fontSize: 13,
+          color: '#888',
+        }}>
+          Last known: {lastWeightDisplay} {weightUnit} × {lastRepsDisplay} reps
+        </p>
 
         {/* Muscles */}
         {exercise.muscles && <div style={{ marginBottom: 4 }}><MuscleTags muscles={exercise.muscles} /></div>}
@@ -162,8 +197,8 @@ function ExerciseCard({ exercise, lastSets, sets, onSetChange, onSetToggle, colo
         {exercise.note && (
           <p style={{
             fontFamily: '"DM Mono", monospace',
-            fontSize: 10,
-            color: '#555',
+            fontSize: 12,
+            color: '#666',
             lineHeight: 1.5,
           }}>
             {exercise.note}
@@ -198,9 +233,26 @@ function ExerciseCard({ exercise, lastSets, sets, onSetChange, onSetToggle, colo
         borderTop: '1px solid #191919',
         background: '#0d0d0d',
       }}>
+        {sets.length > 1 && <span style={{ width: 32, flexShrink: 0 }} />}
         <span style={{ width: 20 }} />
-        <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444', textAlign: 'center' }}>LBS</span>
-        <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444', textAlign: 'center' }}>REPS</span>
+        <span style={{
+          flex: 1,
+          fontFamily: '"DM Mono", monospace',
+          fontSize: 11,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: '#555',
+          textAlign: 'center'
+        }}>{weightUnit.toUpperCase()}</span>
+        <span style={{
+          flex: 1,
+          fontFamily: '"DM Mono", monospace',
+          fontSize: 11,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: '#555',
+          textAlign: 'center'
+        }}>REPS</span>
         <span style={{ width: 32 }} />
       </div>
 
@@ -213,9 +265,32 @@ function ExerciseCard({ exercise, lastSets, sets, onSetChange, onSetToggle, colo
             lastSet={lastSets?.[set.setNumber - 1]}
             onChange={onSetChange}
             onToggle={onSetToggle}
-            color={color}
+            onRemove={onRemoveSet}
+            canRemove={sets.length > 1}
+            weightUnit={weightUnit}
           />
         ))}
+
+        <button
+          onClick={() => onAddSet(exercise.name)}
+          style={{
+            width: 32,
+            height: 32,
+            margin: '12px auto',
+            borderRadius: 6,
+            border: '1px solid #0f5132',
+            background: '#02280f',
+            color: '#4ade80',
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 14,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          +
+        </button>
       </div>
     </div>
   )
@@ -223,26 +298,50 @@ function ExerciseCard({ exercise, lastSets, sets, onSetChange, onSetToggle, colo
 
 export default function WorkoutView({ dayNumber, onBack, onFinish }) {
   const { user } = useAuth()
+  const { weightUnit } = useSettings()
   const workout = getWorkoutDay(dayNumber)
   const color = WORKOUT_COLORS[workout.type]
 
-  const [sets, setSets] = useState({})
-  const [lastSets, setLastSets] = useState({})
-  const [notes, setNotes] = useState('')
-  const [saving, setSaving] = useState(false)
+  const draftKey = `wt_draft_${user?.id}_${dayNumber}`
 
-  useEffect(() => {
-    const initialSets = {}
+  const [sets, setSets] = useState(() => {
+    const initial = {}
     workout.exercises.forEach(ex => {
-      initialSets[ex.name] = Array.from({ length: ex.sets }, (_, i) => ({
+      initial[ex.name] = Array.from({ length: ex.sets ?? 0 }, (_, i) => ({
         setNumber: i + 1,
         weight: '',
         reps: '',
         completed: false,
       }))
     })
-    setSets(initialSets)
-  }, [dayNumber])
+
+    if (typeof window === 'undefined' || !user?.id) return initial
+
+    try {
+      const raw = localStorage.getItem(draftKey)
+      if (!raw) return initial
+      const parsed = JSON.parse(raw)
+      if (!parsed?.sets) return initial
+      return parsed.sets
+    } catch {
+      return initial
+    }
+  })
+  const [lastSets, setLastSets] = useState({})
+  const [notes, setNotes] = useState(() => {
+    if (typeof window === 'undefined' || !user?.id) return ''
+    try {
+      const raw = localStorage.getItem(draftKey)
+      if (!raw) return ''
+      const parsed = JSON.parse(raw)
+      return parsed?.notes ?? ''
+    } catch {
+      return ''
+    }
+  })
+  const [saving, setSaving] = useState(false)
+
+
 
   useEffect(() => {
     async function fetchLastSession() {
@@ -275,14 +374,23 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
     fetchLastSession()
   }, [dayNumber, user.id])
 
+  useEffect(() => {
+    if (!user?.id) return
+    localStorage.setItem(draftKey, JSON.stringify({ sets, notes }))
+  }, [draftKey, notes, sets, user?.id])
+
   const handleSetChange = useCallback((exerciseName, setNumber, field, value) => {
+    const parsedValue = field === 'weight'
+      ? unitToLbs(value, weightUnit)
+      : value
+
     setSets(prev => ({
       ...prev,
       [exerciseName]: prev[exerciseName].map(s =>
-        s.setNumber === setNumber ? { ...s, [field]: value } : s
+        s.setNumber === setNumber ? { ...s, [field]: parsedValue } : s
       ),
     }))
-  }, [])
+  }, [weightUnit])
 
   const handleSetToggle = useCallback((exerciseName, setNumber) => {
     setSets(prev => ({
@@ -291,6 +399,32 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
         s.setNumber === setNumber ? { ...s, completed: !s.completed } : s
       ),
     }))
+  }, [])
+
+  const handleAddSet = useCallback((exerciseName) => {
+    setSets(prev => {
+      const existing = prev[exerciseName] ?? []
+      const nextNumber = existing.length + 1
+      return {
+        ...prev,
+        [exerciseName]: [
+          ...existing,
+          { setNumber: nextNumber, weight: '', reps: '', completed: false },
+        ],
+      }
+    })
+  }, [])
+
+  const handleRemoveSet = useCallback((exerciseName, setNumber) => {
+    setSets(prev => {
+      const existing = prev[exerciseName] ?? []
+      const filtered = existing.filter(s => s.setNumber !== setNumber)
+      const renumbered = filtered.map((s, i) => ({ ...s, setNumber: i + 1 }))
+      return {
+        ...prev,
+        [exerciseName]: renumbered,
+      }
+    })
   }, [])
 
   async function handleSkip() {
@@ -302,6 +436,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
       completed_at: new Date().toISOString(),
       notes: 'SKIPPED',
     })
+    localStorage.removeItem(draftKey)
     setSaving(false)
     onFinish?.()
   }
@@ -344,6 +479,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
 
     if (setRows.length > 0) await supabase.from('sets').insert(setRows)
 
+    localStorage.removeItem(draftKey)
     setSaving(false)
     onFinish?.()
   }
@@ -378,8 +514,8 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
           <p style={{ fontSize: 56, marginBottom: 16 }}>😴</p>
           <p style={{
             fontFamily: '"DM Mono", monospace',
-            fontSize: 10,
-            letterSpacing: '0.15em',
+            fontSize: 11,
+            letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: '#6b6b6b',
             marginBottom: 8,
@@ -427,7 +563,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
     return (
       <div className="page">
         {backBtn()}
-        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: 6 }}>
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: 6 }}>
           Day {dayNumber}
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -465,11 +601,12 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
 
         <SectionLabel>Session Notes</SectionLabel>
         <div style={{
-          background: '#111111',
-          border: '1px solid #1f1f1f',
-          borderRadius: 10,
+          background: '#0d0d0d',
+          border: '1px solid #1a1a1a',
+          borderRadius: 12,
           padding: '14px',
           marginBottom: 16,
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
         }}>
           <textarea
             value={notes}
@@ -543,7 +680,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
       {backBtn()}
 
       {/* Header */}
-      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: 6 }}>
+      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: 6 }}>
         Day {dayNumber}
         {totalSets > 0 && (
           <span style={{ marginLeft: 12 }}>
@@ -556,7 +693,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
       </div>
       <h2 style={{
         fontFamily: '"Bebas Neue", sans-serif',
-        fontSize: 34,
+        fontSize: 36,
         letterSpacing: '0.04em',
         color,
         lineHeight: 1,
@@ -564,7 +701,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
       }}>
         {workout.type} — {workout.subtitle}
       </h2>
-      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: '#555', marginBottom: 16, letterSpacing: '0.04em' }}>
+      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#666', marginBottom: 16, letterSpacing: '0.04em' }}>
         {workout.duration}
       </p>
 
@@ -580,8 +717,8 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
           borderRadius: 6,
           marginBottom: 20,
           fontFamily: '"DM Mono", monospace',
-          fontSize: 11,
-          color: '#6b6b6b',
+          fontSize: 12,
+          color: '#777',
           lineHeight: 1.6,
         }}>
           {workout.description}
@@ -598,6 +735,9 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
           sets={sets[exercise.name] ?? []}
           onSetChange={(setNumber, field, value) => handleSetChange(exercise.name, setNumber, field, value)}
           onSetToggle={(setNumber) => handleSetToggle(exercise.name, setNumber)}
+          onAddSet={handleAddSet}
+          onRemoveSet={(setNumber) => handleRemoveSet(exercise.name, setNumber)}
+          weightUnit={weightUnit}
           color={color}
         />
       ))}
@@ -605,11 +745,12 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
       {/* Notes */}
       <SectionLabel style={{ marginTop: 8 }}>Notes</SectionLabel>
       <div style={{
-        background: '#111111',
-        border: '1px solid #1f1f1f',
-        borderRadius: 10,
+        background: '#0d0d0d',
+        border: '1px solid #1a1a1a',
+        borderRadius: 12,
         padding: '14px',
         marginBottom: 16,
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
       }}>
         <textarea
           value={notes}

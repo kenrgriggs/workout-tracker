@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { WORKOUT_COLORS } from '../lib/workoutDefinitions'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/useAuth'
 import { SectionLabel, TypeBadge } from './ui'
+import { downloadCSV } from '../lib/export'
 
 function WorkoutDetail({ workout, onBack }) {
   const [sets, setSets] = useState([])
@@ -152,7 +153,7 @@ function WorkoutDetail({ workout, onBack }) {
       </div>
 
       {/* Header */}
-      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6b6b6b', marginBottom: 6 }}>
+      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6b6b6b', marginBottom: 6 }}>
         Day {workout.day_number}
       </p>
       <div style={{ marginBottom: 6 }}>
@@ -168,7 +169,7 @@ function WorkoutDetail({ workout, onBack }) {
       }}>
         {workout.workout_type}
       </h2>
-      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#6b6b6b', marginBottom: 24 }}>
+      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#6b6b6b', marginBottom: 24 }}>
         {new Date(workout.completed_at).toLocaleDateString('en-US', {
           weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
         })}
@@ -182,10 +183,10 @@ function WorkoutDetail({ workout, onBack }) {
           padding: '24px 16px',
           textAlign: 'center',
         }}>
-          <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 28, color: '#444', letterSpacing: '0.06em', marginBottom: 4 }}>
+          <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 32, color: '#444', letterSpacing: '0.06em', marginBottom: 4 }}>
             Skipped
           </p>
-          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#444' }}>
+          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 13, color: '#444' }}>
             This day was skipped
           </p>
         </div>
@@ -232,9 +233,9 @@ function WorkoutDetail({ workout, onBack }) {
                 gap: 8,
                 borderBottom: '1px solid #1a1a1a',
               }}>
-                <span style={{ width: 24, fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444' }}>SET</span>
-                <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444' }}>WEIGHT</span>
-                <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444' }}>REPS</span>
+                <span style={{ width: 24, fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444' }}>SET</span>
+                <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444' }}>WEIGHT</span>
+                <span style={{ flex: 1, fontFamily: '"DM Mono", monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#444' }}>REPS</span>
                 <span style={{ width: 24, fontFamily: '"DM Mono", monospace', fontSize: 9, color: '#444', textAlign: 'center' }}>✓</span>
               </div>
 
@@ -343,6 +344,7 @@ export default function HistoryView() {
   const [workouts, setWorkouts] = useState([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     async function fetchWorkouts() {
@@ -357,6 +359,38 @@ export default function HistoryView() {
     }
     fetchWorkouts()
   }, [user.id])
+
+  async function exportWorkouts() {
+    setExporting(true)
+    const { data: allWorkouts } = await supabase
+      .from('workouts')
+      .select('id, day_number, workout_type, completed_at, notes')
+      .eq('user_id', user.id)
+      .order('completed_at', { ascending: false })
+    const { data: allSets } = await supabase
+      .from('sets')
+      .select('workout_id, exercise_name, set_number, weight_lbs, reps, completed')
+      .in('workout_id', (allWorkouts ?? []).map(w => w.id))
+    const workoutMap = {}
+    ;(allWorkouts ?? []).forEach(w => { workoutMap[w.id] = w })
+    const headers = ['Date', 'Day', 'Type', 'Notes', 'Exercise', 'Set', 'Weight (lbs)', 'Reps', 'Completed']
+    const rows = (allSets ?? []).map(s => {
+      const w = workoutMap[s.workout_id] ?? {}
+      return [
+        w.completed_at ? new Date(w.completed_at).toLocaleDateString() : '',
+        w.day_number ?? '',
+        w.workout_type ?? '',
+        w.notes ?? '',
+        s.exercise_name,
+        s.set_number,
+        s.weight_lbs ?? '',
+        s.reps ?? '',
+        s.completed ? 'Yes' : 'No',
+      ]
+    })
+    downloadCSV('workouts.csv', headers, rows)
+    setExporting(false)
+  }
 
   if (selected) {
     return <WorkoutDetail workout={selected} onBack={() => setSelected(null)} />
@@ -384,7 +418,28 @@ export default function HistoryView() {
         </div>
       ) : (
         <>
-          <SectionLabel>Sessions</SectionLabel>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, marginTop: 24 }}>
+            <div className="section-label" style={{ margin: 0, flex: 1 }}>Sessions</div>
+            <button
+              onClick={exportWorkouts}
+              disabled={exporting || workouts.length === 0}
+              style={{
+                background: 'none',
+                border: '1px solid #2a2a2a',
+                borderRadius: 6,
+                color: '#6b6b6b',
+                fontFamily: '"DM Mono", monospace',
+                fontSize: 10,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                padding: '5px 12px',
+                opacity: exporting ? 0.5 : 1,
+              }}
+            >
+              {exporting ? '...' : 'Export CSV'}
+            </button>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {workouts.map(workout => {
               const color = WORKOUT_COLORS[workout.workout_type] ?? '#555'
@@ -448,7 +503,7 @@ export default function HistoryView() {
                           </span>
                         )}
                       </p>
-                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: '#6b6b6b' }}>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 12, color: '#6b6b6b' }}>
                         {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                       </p>
                     </div>

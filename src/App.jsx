@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { AuthProvider } from './contexts/AuthContext'
+import { SettingsProvider } from './contexts/SettingsContext'
+import { useAuth } from './contexts/useAuth'
 import LoginPage from './components/LoginPage'
 import CycleView from './components/CycleView'
 import NutritionView from './components/NutritionView'
@@ -7,6 +9,7 @@ import WorkoutView from './components/WorkoutView'
 import HistoryView from './components/HistoryView'
 import AccountView from './components/AccountView'
 import ProgramView from './components/ProgramView'
+import AnalyticsView from './components/AnalyticsView'
 import BottomNav from './components/BottomNav'
 
 const MAX_WIDTH = 680
@@ -53,6 +56,7 @@ function AppShell() {
         <div className="noise-overlay" />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: MAX_WIDTH, margin: '0 auto' }}>
           <WorkoutView
+            key={selectedDay}
             dayNumber={selectedDay}
             onBack={() => setSelectedDay(null)}
             onFinish={() => {
@@ -145,6 +149,7 @@ function AppShell() {
             <>
               {selectedDay !== null ? (
                 <WorkoutView
+                  key={selectedDay}
                   dayNumber={selectedDay}
                   onBack={() => setSelectedDay(null)}
                   onFinish={() => {
@@ -159,13 +164,7 @@ function AppShell() {
                   )}
                   {workoutTab === 'history' && <HistoryView />}
                   {workoutTab === 'program' && <ProgramView />}
-                  {workoutTab === 'analytics' && (
-                    <div style={{ padding: '20px 16px 100px' }}>
-                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#6b6b6b', padding: '28px 0' }}>
-                        Analytics coming soon.
-                      </p>
-                    </div>
-                  )}
+                  {workoutTab === 'analytics' && <AnalyticsView />}
                 </>
               )}
             </>
@@ -211,7 +210,9 @@ function AppShell() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppShell />
+      <SettingsProvider>
+        <AppShell />
+      </SettingsProvider>
     </AuthProvider>
   )
 }

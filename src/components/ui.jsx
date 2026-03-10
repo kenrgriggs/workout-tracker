@@ -4,12 +4,12 @@ export function SectionLabel({ children }) {
   return <div className="section-label">{children}</div>
 }
 
-export function TypeBadge({ type }) {
+export function TypeBadge({ type, style }) {
   const color = WORKOUT_COLORS[type] ?? '#555'
   return (
     <span
       className="type-badge"
-      style={{ backgroundColor: `${color}28`, color }}
+      style={{ backgroundColor: `${color}28`, color, ...style }}
     >
       {type}
     </span>

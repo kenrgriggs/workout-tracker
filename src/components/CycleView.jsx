@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { WORKOUT_CYCLE, WORKOUT_COLORS } from '../lib/workoutDefinitions'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/useAuth'
 import { SectionLabel, TypeBadge } from './ui'
 
 export default function CycleView({ onSelectDay }) {
@@ -70,7 +70,7 @@ export default function CycleView({ onSelectDay }) {
             >
               <p style={{
                 fontFamily: '"DM Mono", monospace',
-                fontSize: 10,
+                fontSize: 11,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 color: isDone ? '#333' : '#555',
@@ -80,7 +80,7 @@ export default function CycleView({ onSelectDay }) {
               </p>
               <p style={{
                 fontFamily: '"Bebas Neue", sans-serif',
-                fontSize: 14,
+                fontSize: 16,
                 letterSpacing: '0.04em',
                 color: typeColor,
                 lineHeight: 1.2,
@@ -119,73 +119,88 @@ export default function CycleView({ onSelectDay }) {
               onTouchStart={e => e.currentTarget.style.transform = 'scale(0.98)'}
               onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
             >
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, minWidth: 0 }}>
-                  {/* Day number badge */}
-                  <div style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 8,
-                    background: isDone ? '#1a1a1a' : `${color}20`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    fontFamily: '"DM Mono", monospace',
-                    fontSize: 12,
-                    color: isDone ? '#333' : color,
-                    fontWeight: 500,
-                  }}>
-                    {isDone ? '✓' : workout.day}
-                  </div>
-
-                  <div style={{ minWidth: 0 }}>
-                    {/* Type + current badge */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                      <TypeBadge type={workout.type} />
-                      {isCurrent && (
-                        <span style={{
-                          fontFamily: '"DM Mono", monospace',
-                          fontSize: 9,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          color,
-                          background: `${color}20`,
-                          padding: '2px 8px',
-                          borderRadius: 3,
-                        }}>
-                          Up Next
-                        </span>
-                      )}
-                    </div>
-                    {/* Title */}
-                    <p style={{
-                      fontFamily: '"Bebas Neue", sans-serif',
-                      fontSize: 20,
-                      letterSpacing: '0.03em',
-                      color: isDone ? '#3a3a3a' : '#f0f0f0',
-                      lineHeight: 1,
-                      marginBottom: 4,
-                    }}>
-                      {workout.rest
-                        ? 'Rest Day'
-                        : workout.notesOnly
-                          ? workout.exercises[0]?.name
-                          : `${workout.type} — ${workout.subtitle}`}
-                    </p>
-                    {/* Meta */}
-                    <p style={{
-                      fontFamily: '"DM Mono", monospace',
-                      fontSize: 10,
-                      color: '#555',
-                      letterSpacing: '0.04em',
-                    }}>
-                      Day {workout.day} · {workout.duration}
-                    </p>
-                  </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                {/* Day number badge */}
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  background: isDone ? '#1a1a1a' : `${color}20`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  fontFamily: '"DM Mono", monospace',
+                  fontSize: 13,
+                  color: isDone ? '#333' : color,
+                  fontWeight: 500,
+                }}>
+                  {isDone ? '✓' : workout.day}
                 </div>
 
-                <span style={{ color: '#333', fontSize: 18, flexShrink: 0, paddingTop: 8 }}>›</span>
+                {/* Content */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    {/* Type badge — same height as day number */}
+                    <TypeBadge
+                      type={workout.type}
+                      style={{
+                        height: 36,
+                        minWidth: 76,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 10px',
+                        fontSize: 14,
+                        borderRadius: 6,
+                        flexShrink: 0,
+                        opacity: isDone ? 0.35 : 1,
+                      }}
+                    />
+                    {/* Subtitle */}
+                    {workout.subtitle && (
+                      <p style={{
+                        fontFamily: '"Bebas Neue", sans-serif',
+                        fontSize: 19,
+                        letterSpacing: '0.03em',
+                        color: isDone ? '#3a3a3a' : '#f0f0f0',
+                        lineHeight: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {workout.subtitle}
+                      </p>
+                    )}
+                    {/* Up Next badge */}
+                    {isCurrent && (
+                      <span style={{
+                        fontFamily: '"DM Mono", monospace',
+                        fontSize: 10,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color,
+                        background: `${color}20`,
+                        padding: '2px 8px',
+                        borderRadius: 3,
+                        flexShrink: 0,
+                      }}>
+                        Up Next
+                      </span>
+                    )}
+                  </div>
+                  {/* Duration */}
+                  <p style={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: 12,
+                    color: isDone ? '#333' : '#666',
+                    marginTop: 5,
+                  }}>
+                    {workout.duration}
+                  </p>
+                </div>
+
+                <span style={{ color: '#333', fontSize: 18, flexShrink: 0 }}>›</span>
               </div>
             </button>
           )

@@ -15,12 +15,18 @@
 	// "postCreateCommand": "yarn install",
 
 	// Configure tool-specific properties.
-	// "customizations": {},
+	"customizations": {
+    	"vscode": {
+        	"extensions": [
+            	"anthropic.claude-code"
+        	]
+    	}
+	},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 
 	// Persist Claude Code alias so --dangerously-skip-permissions runs by default.
 	// Safe here because this dev container is sandboxed (no host filesystem access).
-	"postCreateCommand": "echo 'alias claude=\"claude --dangerously-skip-permissions\"' >> ~/.bashrc"
+	"postCreateCommand": "npm install -g @anthropic-ai/claude-code && echo 'alias claude=\"claude --dangerously-skip-permissions\"' >> ~/.bashrc"
 }
