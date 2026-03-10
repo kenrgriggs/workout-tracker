@@ -372,7 +372,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
 
   if (workout.rest) {
     return (
-      <div style={{ padding: '20px 16px 100px' }}>
+      <div className="page">
         {backBtn()}
         <div style={{ textAlign: 'center', paddingTop: 60 }}>
           <p style={{ fontSize: 56, marginBottom: 16 }}>😴</p>
@@ -425,7 +425,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
   if (workout.notesOnly) {
     const ex = workout.exercises[0]
     return (
-      <div style={{ padding: '20px 16px 100px' }}>
+      <div className="page">
         {backBtn()}
         <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: 6 }}>
           Day {dayNumber}
@@ -539,7 +539,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
   const completedSets = allSets.filter(s => s.completed).length
 
   return (
-    <div style={{ padding: '20px 16px 100px' }}>
+    <div className="page">
       {backBtn()}
 
       {/* Header */}

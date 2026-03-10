@@ -1,69 +1,19 @@
-export default function BottomNav({ activeTab, onTabChange }) {
-  const tabs = [
-    { id: 'cycle', label: 'Cycle', icon: '◈' },
-    { id: 'history', label: 'History', icon: '▤' },
-    { id: 'program', label: 'Program', icon: '▦' },
-    { id: 'account', label: 'Account', icon: '◎' },
-  ]
+export default function BottomNav({ tabs = [], activeTab, onTabChange }) {
+  if (!tabs?.length) return null
 
   return (
-    <nav
-      style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#0a0a0acc',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderTop: '1px solid #191919',
-        height: 64,
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
-    >
-      <div style={{ display: 'flex', width: '100%', maxWidth: 680 }}>
+    <nav className="bottom-nav">
+      <div className="bottom-nav-inner">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id
           return (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 3,
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                opacity: isActive ? 1 : 0.35,
-                transition: 'opacity 0.15s',
-                height: '100%',
-                WebkitTapHighlightColor: 'transparent',
-              }}
+              className={`bottom-nav-item ${isActive ? 'active' : ''}`}
             >
-              <span style={{
-                fontFamily: '"DM Mono", monospace',
-                fontSize: 16,
-                color: isActive ? '#ff6b35' : '#888',
-                lineHeight: 1,
-              }}>
-                {tab.icon}
-              </span>
-              <span style={{
-                fontFamily: '"Bebas Neue", sans-serif',
-                fontSize: 14,
-                letterSpacing: '0.08em',
-                color: isActive ? '#ff6b35' : '#888',
-                lineHeight: 1,
-              }}>
-                {tab.label}
-              </span>
+              <span className="bottom-nav-icon">{tab.icon}</span>
+              <span className="bottom-nav-label">{tab.label}</span>
             </button>
           )
         })}

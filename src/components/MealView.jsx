@@ -1,0 +1,234 @@
+import { useEffect, useMemo, useState } from 'react'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
+import { SectionLabel } from './ui'
+
+export default function MealView() {
+  const { user } = useAuth()
+  const [meals, setMeals] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [form, setForm] = useState({
+    name: '',
+    calories: '',
+    protein: '',
+    carbs: '',
+    fats: '',
+    notes: '',
+  })
+
+  async function fetchMeals() {
+    setLoading(true)
+    setError('')
+
+    const { data, error } = await supabase
+      .from('meals')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('consumed_at', { ascending: false })
+
+    if (error) {
+      setError(error.message)
+      setMeals([])
+    } else {
+      setMeals(data ?? [])
+    }
+
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchMeals()
+    }
+  }, [user?.id])
+
+  const totals = useMemo(() => {
+    return meals.reduce(
+      (acc, meal) => {
+        acc.calories += meal.calories ?? 0
+        acc.protein += meal.protein ?? 0
+        acc.carbs += meal.carbs ?? 0
+        acc.fats += meal.fats ?? 0
+        return acc
+      },
+      { calories: 0, protein: 0, carbs: 0, fats: 0 }
+    )
+  }, [meals])
+
+  function updateForm(field, value) {
+    setForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  async function handleAddMeal() {
+    setError('')
+    if (!form.name.trim()) return
+
+    setSaving(true)
+    const { data, error } = await supabase.from('meals').insert({
+      user_id: user.id,
+      name: form.name.trim(),
+      calories: form.calories ? parseInt(form.calories, 10) : 0,
+      protein: form.protein ? parseInt(form.protein, 10) : null,
+      carbs: form.carbs ? parseInt(form.carbs, 10) : null,
+      fats: form.fats ? parseInt(form.fats, 10) : null,
+      notes: form.notes.trim() || null,
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setForm({ name: '', calories: '', protein: '', carbs: '', fats: '', notes: '' })
+      await fetchMeals()
+    }
+
+    setSaving(false)
+  }
+
+  async function handleDeleteMeal(id) {
+    setSaving(true)
+    await supabase.from('meals').delete().eq('id', id)
+    setMeals(prev => prev.filter(meal => meal.id !== id))
+    setSaving(false)
+  }
+
+  return (
+    <div className="page">
+      <div className="page-header">
+        <p className="page-subtitle">Nutrition log</p>
+        <h1 className="page-title">Meal Tracker</h1>
+
+        {error && (
+          <div className="alert" style={{ marginTop: 12 }}>
+            {error}
+            <small>
+              Make sure you’ve run the database migration in Supabase (see README).
+            </small>
+          </div>
+        )}
+      </div>
+
+      <SectionLabel>Daily totals</SectionLabel>
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-label">Calories</div>
+          <p className="stat-value">{totals.calories}</p>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Protein</div>
+          <p className="stat-value">{totals.protein}</p>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Carbs</div>
+          <p className="stat-value">{totals.carbs}</p>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Fats</div>
+          <p className="stat-value">{totals.fats}</p>
+        </div>
+      </div>
+
+      <SectionLabel>Add meal</SectionLabel>
+      <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
+        <input
+          className="input"
+          value={form.name}
+          onChange={(e) => updateForm('name', e.target.value)}
+          placeholder="Meal / food name"
+        />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
+          <input
+            className="input"
+            type="number"
+            value={form.calories}
+            onChange={(e) => updateForm('calories', e.target.value)}
+            placeholder="Calories"
+          />
+          <input
+            className="input"
+            type="number"
+            value={form.protein}
+            onChange={(e) => updateForm('protein', e.target.value)}
+            placeholder="Protein"
+          />
+          <input
+            className="input"
+            type="number"
+            value={form.carbs}
+            onChange={(e) => updateForm('carbs', e.target.value)}
+            placeholder="Carbs"
+          />
+          <input
+            className="input"
+            type="number"
+            value={form.fats}
+            onChange={(e) => updateForm('fats', e.target.value)}
+            placeholder="Fats"
+          />
+        </div>
+
+        <textarea
+          className="input"
+          value={form.notes}
+          onChange={(e) => updateForm('notes', e.target.value)}
+          placeholder="Notes (optional)"
+          rows={2}
+          style={{ resize: 'vertical' }}
+        />
+
+        <button
+          className="btn btn-primary"
+          onClick={handleAddMeal}
+          disabled={saving || !form.name.trim()}
+        >
+          {saving ? 'Saving…' : 'Add meal'}
+        </button>
+      </div>
+
+      <SectionLabel>Recent meals</SectionLabel>
+      {loading ? (
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#6b6b6b', textAlign: 'center', padding: '28px 0' }}>
+          Loading…
+        </p>
+      ) : meals.length === 0 ? (
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#6b6b6b', textAlign: 'center', padding: '28px 0' }}>
+          No meals yet. Add your first one above.
+        </p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {meals.map(meal => (
+            <div key={meal.id} className="card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 18, margin: 0, lineHeight: 1.1 }}>{meal.name}</p>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 11, color: '#6b6b6b', marginTop: 4 }}>
+                    {new Date(meal.consumed_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  {meal.notes && (
+                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#888', marginTop: 8, whiteSpace: 'pre-wrap' }}>
+                      {meal.notes}
+                    </p>
+                  )}
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 18, margin: 0 }}>{meal.calories ?? 0}</p>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: '#6b6b6b', marginTop: 4 }}>kcal</p>
+                  <button
+                    onClick={() => handleDeleteMeal(meal.id)}
+                    disabled={saving}
+                    className="subtle-btn"
+                    style={{ marginTop: 10 }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

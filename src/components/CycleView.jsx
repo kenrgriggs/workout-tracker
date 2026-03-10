@@ -28,30 +28,14 @@ export default function CycleView({ onSelectDay }) {
   const currentDay = lastWorkout ? (lastWorkout.day_number % 9) + 1 : 1
 
   return (
-    <div style={{ padding: '20px 16px 100px' }}>
-      {/* Page header */}
-      <div style={{ marginBottom: 24 }}>
-        <p style={{
-          fontFamily: '"DM Mono", monospace',
-          fontSize: 10,
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-          color: '#555',
-          marginBottom: 4,
-        }}>
+    <div className="page">
+      <div className="page-header">
+        <p className="page-subtitle">
           {loading ? '...' : lastWorkout
             ? `Last session · Day ${lastWorkout.day_number} · ${lastWorkout.workout_type}`
             : 'Start your first workout'}
         </p>
-        <h2 style={{
-          fontFamily: '"Bebas Neue", sans-serif',
-          fontSize: 36,
-          letterSpacing: '0.04em',
-          color: '#f0f0f0',
-          lineHeight: 1,
-        }}>
-          9-Day Cycle
-        </h2>
+        <h1 className="page-title">9-Day Cycle</h1>
       </div>
 
       {/* Horizontal pill grid */}
@@ -209,16 +193,7 @@ export default function CycleView({ onSelectDay }) {
       </div>
 
       {/* Footer */}
-      <div style={{
-        marginTop: 40,
-        paddingTop: 20,
-        borderTop: '1px solid #1f1f1f',
-        fontFamily: '"DM Mono", monospace',
-        fontSize: 10,
-        color: '#333',
-        textAlign: 'center',
-        letterSpacing: '0.08em',
-      }}>
+      <div className="footer-note">
         PPL + VO2 Max · 9-Day Cycle · Add 2.5–5 lbs when you hit top of rep range
       </div>
     </div>

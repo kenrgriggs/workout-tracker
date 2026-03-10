@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import LoginPage from './components/LoginPage'
 import CycleView from './components/CycleView'
+import NutritionView from './components/NutritionView'
 import WorkoutView from './components/WorkoutView'
 import HistoryView from './components/HistoryView'
 import AccountView from './components/AccountView'
@@ -12,8 +13,29 @@ const MAX_WIDTH = 680
 
 function AppShell() {
   const { user, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState('cycle')
+  const [activeSection, setActiveSection] = useState('workout')
+  const [workoutTab, setWorkoutTab] = useState('cycle')
+  const [nutritionTab, setNutritionTab] = useState('log')
   const [selectedDay, setSelectedDay] = useState(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const sectionMeta = {
+    workout: { title: 'Workout Tracker', subtitle: 'Training / PPL + VO2' },
+    nutrition: { title: 'Nutrition Tracker', subtitle: 'Track calories & macros' },
+    account: { title: 'Account', subtitle: 'Profile & settings' },
+  }
+  const { title, subtitle } = sectionMeta[activeSection] ?? sectionMeta.workout
+
+  const setSection = (section) => {
+    setActiveSection(section)
+    setMenuOpen(false)
+  }
+
+  const navItems = [
+    { id: 'workout', label: 'Workout', description: '9-day cycle' },
+    { id: 'nutrition', label: 'Nutrition', description: 'Food + calories' },
+    { id: 'account', label: 'Account', description: 'Profile & settings' },
+  ]
 
   if (loading) {
     return (
@@ -35,7 +57,7 @@ function AppShell() {
             onBack={() => setSelectedDay(null)}
             onFinish={() => {
               setSelectedDay(null)
-              setActiveTab('history')
+              setWorkoutTab('history')
             }}
           />
         </div>
@@ -49,56 +71,138 @@ function AppShell() {
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Header — full width bg, inner content constrained */}
-        <header style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          backgroundColor: '#0a0a0acc',
-          backdropFilter: 'blur(8px)',
-          borderBottom: '1px solid #191919',
-        }}>
-          <div style={{
-            maxWidth: MAX_WIDTH,
-            margin: '0 auto',
-            padding: '10px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-            <div>
-              <p style={{
-                fontFamily: '"DM Mono", monospace',
-                fontSize: 9,
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                color: '#444',
-                marginBottom: 1,
-              }}>
-                Training / PPL + VO2
-              </p>
-              <h1 style={{
-                fontFamily: '"Bebas Neue", sans-serif',
-                fontSize: 22,
-                letterSpacing: '0.04em',
-                color: '#f0f0f0',
-                lineHeight: 1,
-              }}>
-                Workout Tracker
-              </h1>
+        <header className="app-header">
+          <div className="app-header-inner">
+            <div style={{ flex: 1 }}>
+              <p className="app-header-subtitle">{subtitle}</p>
+              <h1 className="app-header-title">{title}</h1>
             </div>
+
+            <button
+              onClick={() => setMenuOpen(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#f0f0f0',
+                fontSize: 22,
+                cursor: 'pointer',
+                padding: 8,
+                borderRadius: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              aria-label="Open navigation"
+            >
+              ☰
+            </button>
           </div>
         </header>
 
+        <div
+          className={`app-menu-backdrop ${menuOpen ? 'open' : ''}`}
+          onClick={() => setMenuOpen(false)}
+        >
+          <div
+            className={`app-menu ${menuOpen ? 'open' : ''}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="app-menu-header">
+              <p className="app-menu-title">Navigation</p>
+              <button
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#6b6b6b',
+                  fontSize: 22,
+                  cursor: 'pointer',
+                }}
+                aria-label="Close navigation"
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {navItems.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setSection(item.id)}
+                  className={`app-menu-item ${activeSection === item.id ? 'active' : ''}`}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span className="app-menu-item-title">{item.label}</span>
+                    <span className="app-menu-item-meta">{item.description}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <main style={{ maxWidth: MAX_WIDTH, margin: '0 auto' }}>
-          {activeTab === 'cycle' && (
-            <CycleView onSelectDay={(day) => setSelectedDay(day)} />
+          {activeSection === 'workout' && (
+            <>
+              {selectedDay !== null ? (
+                <WorkoutView
+                  dayNumber={selectedDay}
+                  onBack={() => setSelectedDay(null)}
+                  onFinish={() => {
+                    setSelectedDay(null)
+                    setWorkoutTab('history')
+                  }}
+                />
+              ) : (
+                <>
+                  {workoutTab === 'cycle' && (
+                    <CycleView onSelectDay={(day) => setSelectedDay(day)} />
+                  )}
+                  {workoutTab === 'history' && <HistoryView />}
+                  {workoutTab === 'program' && <ProgramView />}
+                  {workoutTab === 'analytics' && (
+                    <div style={{ padding: '20px 16px 100px' }}>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#6b6b6b', padding: '28px 0' }}>
+                        Analytics coming soon.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
           )}
-          {activeTab === 'history' && <HistoryView />}
-          {activeTab === 'program' && <ProgramView />}
-          {activeTab === 'account' && <AccountView />}
+
+          {activeSection === 'nutrition' && (
+            <NutritionView activeTab={nutritionTab} />
+          )}
+
+          {activeSection === 'account' && <AccountView />}
         </main>
 
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+        {activeSection === 'workout' && (
+          <BottomNav
+            tabs={[
+              { id: 'cycle', label: 'Cycle', icon: '◈' },
+              { id: 'history', label: 'History', icon: '▤' },
+              { id: 'program', label: 'Program', icon: '▦' },
+              { id: 'analytics', label: 'Analytics', icon: '▥' },
+            ]}
+            activeTab={workoutTab}
+            onTabChange={setWorkoutTab}
+          />
+        )}
+
+        {activeSection === 'nutrition' && (
+          <BottomNav
+            tabs={[
+              { id: 'log', label: 'Log', icon: '🧾' },
+              { id: 'history', label: 'History', icon: '▤' },
+              { id: 'program', label: 'Program', icon: '▦' },
+              { id: 'analytics', label: 'Analytics', icon: '▥' },
+            ]}
+            activeTab={nutritionTab}
+            onTabChange={setNutritionTab}
+          />
+        )}
       </div>
     </div>
   )

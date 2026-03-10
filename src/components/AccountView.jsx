@@ -33,27 +33,12 @@ export default function AccountView() {
     }
   }
 
-  const inputStyle = {
-    width: '100%',
-    padding: '12px 14px',
-    borderRadius: 8,
-    background: '#161616',
-    border: '1px solid #2a2a2a',
-    color: '#f5f5f5',
-    fontFamily: '"DM Sans", sans-serif',
-    fontSize: 14,
-    outline: 'none',
-  }
-
   return (
-    <div style={{ padding: '20px 16px 100px' }}>
-      {/* Header */}
-      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#6b6b6b', marginBottom: 4 }}>
-        Settings
-      </p>
-      <h2 style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 36, letterSpacing: '0.04em', color: '#f5f5f5', lineHeight: 1, marginBottom: 28 }}>
-        Account
-      </h2>
+    <div className="page">
+      <div className="page-header">
+        <p className="page-subtitle">Settings</p>
+        <h1 className="page-title">Account</h1>
+      </div>
 
       {/* Account info */}
       <SectionLabel>Account Info</SectionLabel>
@@ -70,20 +55,20 @@ export default function AccountView() {
       <SectionLabel>Change Password</SectionLabel>
       <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
         <input
+          className="input"
           type="password"
           placeholder="New password"
           value={newPassword}
           onChange={e => setNewPassword(e.target.value)}
           required
-          style={inputStyle}
         />
         <input
+          className="input"
           type="password"
           placeholder="Confirm new password"
           value={confirmPassword}
           onChange={e => setConfirmPassword(e.target.value)}
           required
-          style={inputStyle}
         />
 
         {status && (
@@ -99,20 +84,8 @@ export default function AccountView() {
 
         <button
           type="submit"
+          className="btn btn-primary"
           disabled={saving}
-          style={{
-            padding: '13px',
-            borderRadius: 8,
-            background: '#ff6b35',
-            border: 'none',
-            color: '#000',
-            fontFamily: '"Bebas Neue", sans-serif',
-            fontSize: 20,
-            letterSpacing: '0.06em',
-            cursor: 'pointer',
-            opacity: saving ? 0.5 : 1,
-            transition: 'opacity 0.15s',
-          }}
         >
           {saving ? 'Updating...' : 'Update Password'}
         </button>
@@ -121,19 +94,8 @@ export default function AccountView() {
       {/* Danger zone */}
       <SectionLabel>Session</SectionLabel>
       <button
+        className="btn btn-secondary"
         onClick={() => supabase.auth.signOut()}
-        style={{
-          width: '100%',
-          padding: '13px',
-          borderRadius: 8,
-          background: 'transparent',
-          border: '1px solid #2a2a2a',
-          color: '#6b6b6b',
-          fontFamily: '"Bebas Neue", sans-serif',
-          fontSize: 20,
-          letterSpacing: '0.06em',
-          cursor: 'pointer',
-        }}
       >
         Sign Out
       </button>

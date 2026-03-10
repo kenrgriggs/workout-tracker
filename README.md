@@ -58,7 +58,17 @@ Open the [Supabase SQL Editor](https://supabase.com/dashboard/project/_/sql) and
 supabase/migrations/001_initial_schema.sql
 ```
 
-This creates the `workouts` and `sets` tables with RLS policies so each user only sees their own data.
+Then run the SQL in `supabase/migrations/002_add_meals_table.sql` (copy & paste the file contents into the Supabase SQL editor and execute it).
+
+If you have the Supabase CLI installed, you can also run:
+
+```bash
+supabase db push --file supabase/migrations/002_add_meals_table.sql
+```
+
+This creates the `workouts`, `sets`, and new `meals` table (with RLS policies) so each user only sees their own data.
+
+> If the app says it can’t find `public.meals`, it means the migration wasn’t applied in your Supabase project. Make sure you actually **run the SQL**, not just type the filename, then refresh the app.
 
 ### 5. Run locally
 

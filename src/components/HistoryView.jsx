@@ -75,7 +75,7 @@ function WorkoutDetail({ workout, onBack }) {
   }, {})
 
   return (
-    <div style={{ padding: '20px 16px 100px' }}>
+    <div className="page">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
         <button
           onClick={onBack}
@@ -363,27 +363,11 @@ export default function HistoryView() {
   }
 
   return (
-    <div style={{ padding: '20px 16px 100px' }}>
-      <p style={{
-        fontFamily: '"DM Mono", monospace',
-        fontSize: 10,
-        letterSpacing: '0.15em',
-        textTransform: 'uppercase',
-        color: '#6b6b6b',
-        marginBottom: 4,
-      }}>
+    <div className="page">
+      <p className="page-subtitle">
         {loading ? '...' : `${workouts.length} session${workouts.length !== 1 ? 's' : ''} logged`}
       </p>
-      <h2 style={{
-        fontFamily: '"Bebas Neue", sans-serif',
-        fontSize: 36,
-        letterSpacing: '0.04em',
-        color: '#f0f0f0',
-        lineHeight: 1,
-        marginBottom: 24,
-      }}>
-        History
-      </h2>
+      <h1 className="page-title">History</h1>
 
       {loading ? (
         <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#6b6b6b', textAlign: 'center', padding: '32px 0' }}>

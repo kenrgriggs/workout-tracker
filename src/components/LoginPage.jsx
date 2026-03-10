@@ -103,40 +103,20 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input
+              className="input"
               type="email"
               placeholder="Email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 8,
-                background: '#141414',
-                border: '1px solid #2a2a2a',
-                color: '#f0f0f0',
-                fontFamily: '"DM Sans", sans-serif',
-                fontSize: 14,
-                outline: 'none',
-              }}
             />
             <input
+              className="input"
               type="password"
               placeholder="Password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 8,
-                background: '#141414',
-                border: '1px solid #2a2a2a',
-                color: '#f0f0f0',
-                fontFamily: '"DM Sans", sans-serif',
-                fontSize: 14,
-                outline: 'none',
-              }}
             />
 
             {error && (
@@ -152,21 +132,8 @@ export default function LoginPage() {
 
             <button
               type="submit"
+              className="btn btn-primary"
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: 8,
-                background: '#ff6b35',
-                border: 'none',
-                color: '#000',
-                fontFamily: '"Bebas Neue", sans-serif',
-                fontSize: 20,
-                letterSpacing: '0.06em',
-                cursor: 'pointer',
-                opacity: loading ? 0.5 : 1,
-                transition: 'opacity 0.15s',
-              }}
             >
               {loading ? '...' : mode === 'login' ? 'Sign In' : 'Create Account'}
             </button>
@@ -182,7 +149,8 @@ export default function LoginPage() {
             {mode === 'login' ? "No account? " : 'Have an account? '}
             <button
               onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(null); setMessage(null) }}
-              style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontFamily: '"DM Mono", monospace', fontSize: 11, textDecoration: 'underline' }}
+              className="subtle-btn"
+              style={{ textDecoration: 'underline' }}
             >
               {mode === 'login' ? 'Sign up' : 'Sign in'}
             </button>
