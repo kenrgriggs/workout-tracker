@@ -7,5 +7,11 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     host: true
-  }
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.js'],
+    css: false,   // skip CSS processing in tests — not needed for behavior tests
+  },
 })

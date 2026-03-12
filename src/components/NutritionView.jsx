@@ -1,13 +1,14 @@
 import MealView from './MealView'
 import MealHistory from './MealHistory'
+import NutritionAnalyticsView from './NutritionAnalyticsView'
 
 export default function NutritionView({ activeTab }) {
   if (activeTab === 'log') return <MealView />
   if (activeTab === 'history') return <MealHistory />
+  if (activeTab === 'analytics') return <NutritionAnalyticsView />
 
   const tabMeta = {
     program: { title: 'Nutrition Program', body: 'Coming soon: structured meal plans, macro targets, and weekly templates.' },
-    analytics: { title: 'Nutrition Analytics', body: 'Coming soon: nutrition trends, calorie graphs, and macro breakdowns.' },
   }
   const meta = tabMeta[activeTab]
 
