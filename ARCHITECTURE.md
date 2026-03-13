@@ -61,7 +61,10 @@ src/
     ├── supabase.js            # Supabase client singleton, reads VITE_SUPABASE_* env vars
     ├── workoutDefinitions.js  # Hardcoded 9-day cycle: exercise names, set counts, notes
     ├── units.js               # Weight conversion helpers (lbs ↔ kg)
-    └── export.js              # CSV generation and download (runs entirely in the browser)
+    ├── export.js              # CSV generation and download (runs entirely in the browser)
+    ├── workoutExport.js       # Workout CSV export: fetches workouts + sets, calls downloadCSV
+    └── hooks/
+        └── useMeals.js        # Centralized meals query hook (used by MealView, MealHistory, NutritionAnalyticsView)
 
 supabase/
 └── migrations/
@@ -222,7 +225,18 @@ Response → setState(data) or setError(msg)
 Re-render
 ```
 
-All Supabase calls are made **directly from components**. There is no API abstraction layer or service class. This is acceptable at current scale; if query logic is duplicated across more than two components, it should be extracted to a custom hook in `src/lib/`.
+Most Supabase calls are made **directly from components**. There is no API abstraction layer or service class. Query logic that is duplicated across more than two components is extracted to a shared module in `src/lib/`.
+
+**Centralized queries:**
+
+| Module | Tables | Used by |
+|---|---|---|
+| `useMeals` (hook) | `meals` | `MealView`, `MealHistory`, `NutritionAnalyticsView` |
+| `exportWorkoutsCSV` (utility) | `workouts`, `sets` | `HistoryView`, `AnalyticsView`, `AccountView` |
+
+`useMeals` returns `{ meals, setMeals, loading, error, refetch }`. Components call `refetch()` after mutations (insert) and use `setMeals` for optimistic updates (delete).
+
+`exportWorkoutsCSV(supabase, userId)` is a plain async function (not a hook) — it fetches workouts, fetches sets for those workout IDs, joins them in-memory, and calls `downloadCSV`. The `supabase` client is passed as a parameter so the function is testable without module-level mocking.
 
 ### Key query patterns
 

@@ -12,8 +12,13 @@ import ProgramView from './components/ProgramView'
 import AnalyticsView from './components/AnalyticsView'
 import BottomNav from './components/BottomNav'
 
+// Named constant rather than a repeated magic number so a single edit resizes
+// the entire layout. Referenced in both the header inner container and the main content area.
 const MAX_WIDTH = 680
 
+// AppShell is split from App so it can call useAuth(), which requires being
+// rendered *inside* AuthProvider. A single combined component would need to
+// provide and consume the context in the same render, which React doesn't allow.
 function AppShell() {
   const { user, loading } = useAuth()
   const [activeSection, setActiveSection] = useState('workout')
@@ -31,6 +36,8 @@ function AppShell() {
 
   const setSection = (section) => {
     setActiveSection(section)
+    // Close the drawer before switching sections so it doesn't remain open
+    // on the new section.
     setMenuOpen(false)
   }
 
@@ -50,12 +57,17 @@ function AppShell() {
 
   if (!user) return <LoginPage />
 
+  // WorkoutView is rendered outside the header/BottomNav shell so it has the
+  // full viewport to itself. The early return here prevents the header and nav
+  // from rendering at all during an active workout session.
   if (selectedDay !== null) {
     return (
       <div style={{ position: 'relative', backgroundColor: '#0a0a0a', minHeight: '100dvh' }}>
         <div className="noise-overlay" />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: MAX_WIDTH, margin: '0 auto' }}>
           <WorkoutView
+            // `key` forces a full unmount/remount when the day changes, resetting
+            // all draft state in WorkoutView without needing explicit reset logic.
             key={selectedDay}
             dayNumber={selectedDay}
             onBack={() => setSelectedDay(null)}

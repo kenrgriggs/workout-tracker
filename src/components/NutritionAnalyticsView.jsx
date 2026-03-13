@@ -1,28 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
-import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/useAuth'
+import { useMemo, useState } from 'react'
 import { SectionLabel } from './ui'
 import { downloadCSV } from '../lib/export'
+import { useMeals } from '../lib/hooks/useMeals'
 
 export default function NutritionAnalyticsView() {
-  const { user } = useAuth()
-  const [meals, setMeals] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { meals, loading } = useMeals()
   const [exporting, setExporting] = useState(false)
-
-  useEffect(() => {
-    async function fetchMeals() {
-      setLoading(true)
-      const { data } = await supabase
-        .from('meals')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('consumed_at', { ascending: false })
-      setMeals(data ?? [])
-      setLoading(false)
-    }
-    if (user?.id) fetchMeals()
-  }, [user?.id])
 
   // ── Derived stats ──────────────────────────────────────────────────────────
 
@@ -102,15 +85,11 @@ export default function NutritionAnalyticsView() {
     [last7]
   )
 
+  // Same as MealHistory: reuse the hook's loaded data rather than re-querying.
   async function exportNutrition() {
     setExporting(true)
-    const { data } = await supabase
-      .from('meals')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('consumed_at', { ascending: false })
     const headers = ['Date', 'Name', 'Calories', 'Protein (g)', 'Carbs (g)', 'Fats (g)', 'Notes']
-    const rows = (data ?? []).map(m => [
+    const rows = meals.map(m => [
       new Date(m.consumed_at).toLocaleString(),
       m.name,
       m.calories ?? '',

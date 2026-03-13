@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/useAuth'
 import { useSettings } from '../contexts/useSettings'
 import { SectionLabel } from './ui'
 import { downloadCSV } from '../lib/export'
+import { exportWorkoutsCSV } from '../lib/workoutExport'
 
 export default function AccountView() {
   const { user } = useAuth()
@@ -16,29 +17,7 @@ export default function AccountView() {
 
   async function exportAll() {
     setExporting(true)
-    // Workouts
-    const { data: allWorkouts } = await supabase
-      .from('workouts')
-      .select('id, day_number, workout_type, completed_at, notes')
-      .eq('user_id', user.id)
-      .order('completed_at', { ascending: false })
-    const { data: allSets } = await supabase
-      .from('sets')
-      .select('workout_id, exercise_name, set_number, weight_lbs, reps, completed')
-      .in('workout_id', (allWorkouts ?? []).map(w => w.id))
-    const workoutMap = {}
-    ;(allWorkouts ?? []).forEach(w => { workoutMap[w.id] = w })
-    const wHeaders = ['Date', 'Day', 'Type', 'Notes', 'Exercise', 'Set', 'Weight (lbs)', 'Reps', 'Completed']
-    const wRows = (allSets ?? []).map(s => {
-      const w = workoutMap[s.workout_id] ?? {}
-      return [
-        w.completed_at ? new Date(w.completed_at).toLocaleDateString() : '',
-        w.day_number ?? '', w.workout_type ?? '', w.notes ?? '',
-        s.exercise_name, s.set_number, s.weight_lbs ?? '', s.reps ?? '',
-        s.completed ? 'Yes' : 'No',
-      ]
-    })
-    downloadCSV('workouts.csv', wHeaders, wRows)
+    await exportWorkoutsCSV(supabase, user.id)
     // Meals
     const { data: meals } = await supabase
       .from('meals')

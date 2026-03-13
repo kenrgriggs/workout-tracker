@@ -147,6 +147,8 @@ function SetRow({ set, lastSet, onChange, onToggle, onRemove, canRemove, weightU
 function ExerciseCard({ exercise, lastSets, sets, onSetChange, onSetToggle, onAddSet, onRemoveSet, weightUnit, color }) {
   const completedCount = sets.filter(s => s.completed).length
 
+  // Use the last set of the previous session as the "previous best" reference.
+  // The last set is used because it's typically the heaviest (progressive sets).
   const lastSet = lastSets && lastSets.length ? lastSets[lastSets.length - 1] : null
   const lastWeightDisplay = lastSet?.weight_lbs != null ? lbsToUnit(lastSet.weight_lbs, weightUnit) : '--'
   const lastRepsDisplay = lastSet?.reps != null ? lastSet.reps : '--'
@@ -302,9 +304,14 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
   const workout = getWorkoutDay(dayNumber)
   const color = WORKOUT_COLORS[workout.type]
 
+  // Draft key is scoped to both user and day so drafts don't bleed between
+  // accounts (shared device) or between different workout days.
   const draftKey = `wt_draft_${user?.id}_${dayNumber}`
 
   const [sets, setSets] = useState(() => {
+    // Lazy initializer: builds the initial set structure from the workout definition,
+    // then overlays any in-progress draft from localStorage. This lets users close
+    // the app mid-workout and return to exactly where they left off.
     const initial = {}
     workout.exercises.forEach(ex => {
       initial[ex.name] = Array.from({ length: ex.sets ?? 0 }, (_, i) => ({
@@ -329,6 +336,7 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
   })
   const [lastSets, setLastSets] = useState({})
   const [notes, setNotes] = useState(() => {
+    // Same draft-restore pattern as sets above.
     if (typeof window === 'undefined' || !user?.id) return ''
     try {
       const raw = localStorage.getItem(draftKey)
@@ -374,12 +382,17 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
     fetchLastSession()
   }, [dayNumber, user.id])
 
+  // Persist the draft on every change so the user can safely close the browser
+  // mid-workout. The draft is cleared (localStorage.removeItem) on finish or skip.
   useEffect(() => {
     if (!user?.id) return
     localStorage.setItem(draftKey, JSON.stringify({ sets, notes }))
   }, [draftKey, notes, sets, user?.id])
 
+  // useCallback keeps handler references stable across renders so ExerciseCard
+  // doesn't re-render purely because the parent re-rendered.
   const handleSetChange = useCallback((exerciseName, setNumber, field, value) => {
+    // Weight is stored in lbs in state; convert from the user's display unit on input.
     const parsedValue = field === 'weight'
       ? unitToLbs(value, weightUnit)
       : value
@@ -419,6 +432,9 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
     setSets(prev => {
       const existing = prev[exerciseName] ?? []
       const filtered = existing.filter(s => s.setNumber !== setNumber)
+      // Renumber after removal so set numbers stay contiguous (1, 2, 3...).
+      // Set numbers are used as display labels and as positional references
+      // when looking up `lastSets`, so gaps would produce incorrect display.
       const renumbered = filtered.map((s, i) => ({ ...s, setNumber: i + 1 }))
       return {
         ...prev,
@@ -429,6 +445,9 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
 
   async function handleSkip() {
     setSaving(true)
+    // Inserting with notes: 'SKIPPED' is the sentinel that marks a day as skipped
+    // throughout the codebase (CycleView, HistoryView, AnalyticsView all check for it).
+    // Skipped days are still logged so the cycle advances correctly.
     await supabase.from('workouts').insert({
       user_id: user.id,
       day_number: dayNumber,
@@ -462,6 +481,9 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
       return
     }
 
+    // Batch all set rows into a single insert rather than one call per set.
+    // This reduces round-trips and keeps the workout + sets write as atomic as
+    // the Supabase JS client allows (no true transaction, but one fewer failure point).
     const setRows = []
     Object.entries(sets).forEach(([exerciseName, exerciseSets]) => {
       exerciseSets.forEach(s => {

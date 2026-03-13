@@ -1,23 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
-import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/useAuth'
+import { useMemo, useState } from 'react'
 import { downloadCSV } from '../lib/export'
+import { useMeals } from '../lib/hooks/useMeals'
 
 export default function MealHistory() {
-  const { user } = useAuth()
-  const [meals, setMeals] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { meals, loading } = useMeals()
   const [exporting, setExporting] = useState(false)
 
+  // Export uses the already-loaded `meals` array from useMeals rather than
+  // re-querying Supabase, since the hook fetches all meals on mount in the
+  // same order (consumed_at DESC) that the export needs.
   async function exportNutrition() {
     setExporting(true)
-    const { data } = await supabase
-      .from('meals')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('consumed_at', { ascending: false })
     const headers = ['Date', 'Name', 'Calories', 'Protein (g)', 'Carbs (g)', 'Fats (g)', 'Notes']
-    const rows = (data ?? []).map(m => [
+    const rows = meals.map(m => [
       new Date(m.consumed_at).toLocaleString(),
       m.name,
       m.calories ?? '',
@@ -29,23 +24,6 @@ export default function MealHistory() {
     downloadCSV('nutrition.csv', headers, rows)
     setExporting(false)
   }
-
-  useEffect(() => {
-    async function fetchMeals() {
-      setLoading(true)
-      const { data } = await supabase
-        .from('meals')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('consumed_at', { ascending: false })
-      setMeals(data ?? [])
-      setLoading(false)
-    }
-
-    if (user?.id) {
-      fetchMeals()
-    }
-  }, [user?.id])
 
   const totals = useMemo(() => {
     return meals.reduce(

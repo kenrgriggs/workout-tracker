@@ -25,6 +25,8 @@ export default function CycleView({ onSelectDay }) {
     fetchLastWorkout()
   }, [user.id])
 
+  // Compute the next day to train: after Day 9, wrap back to Day 1.
+  // `% 9` maps Day 9 → 0, then `+ 1` maps 0 → 1. Default to Day 1 with no history.
   const currentDay = lastWorkout ? (lastWorkout.day_number % 9) + 1 : 1
 
   return (

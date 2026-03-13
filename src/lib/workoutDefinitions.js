@@ -9,6 +9,17 @@ export const WORKOUT_COLORS = {
   'Rest': '#444444',
 }
 
+// The full program is defined here as static JS rather than stored in the database.
+// The cycle structure is fixed and identical for every user, so there's no value in
+// persisting it. Keeping it in code means changes are version-controlled and don't
+// require a DB migration.
+//
+// Shape of each day:
+//   day         — 1-based integer used as the DB key and for display
+//   type        — string stored in workouts.workout_type; also the key for WORKOUT_COLORS
+//   rest        — if true, WorkoutView renders a rest-day screen with no exercise logging
+//   notesOnly   — if true, WorkoutView renders a cardio/freeform notes screen (no set logging)
+//   exercises   — array used both for the program reference view and for generating set rows in WorkoutView
 export const WORKOUT_CYCLE = [
   {
     day: 1,
@@ -149,6 +160,7 @@ export const WORKOUT_CYCLE = [
   },
 ]
 
+// `find` instead of array index because `day` is 1-based, not 0-based.
 export function getWorkoutDay(dayNumber) {
   return WORKOUT_CYCLE.find(w => w.day === dayNumber)
 }

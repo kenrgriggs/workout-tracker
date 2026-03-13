@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/useAuth'
 import { SectionLabel } from './ui'
+import { useMeals } from '../lib/hooks/useMeals'
 
 export default function MealView() {
   const { user } = useAuth()
-  const [meals, setMeals] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { meals, setMeals, loading, error: fetchError, refetch: fetchMeals } = useMeals()
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  // Two separate error slots because they have different lifecycles:
+  // fetchError (from the hook) persists until the next fetch; submitError
+  // is cleared at the start of each submit attempt.
+  const [submitError, setSubmitError] = useState('')
   const [form, setForm] = useState({
     name: '',
     calories: '',
@@ -20,33 +23,7 @@ export default function MealView() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const blurTimeout = useRef(null)
 
-  const fetchMeals = useCallback(async () => {
-    if (!user) return
-
-    setLoading(true)
-    setError('')
-
-    const { data, error } = await supabase
-      .from('meals')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('consumed_at', { ascending: false })
-
-    if (error) {
-      setError(error.message)
-      setMeals([])
-    } else {
-      setMeals(data ?? [])
-    }
-
-    setLoading(false)
-  }, [user])
-
-  useEffect(() => {
-    if (!user?.id) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchMeals()
-  }, [user?.id, fetchMeals])
+  const error = fetchError || submitError
 
   const totals = useMemo(() => {
     return meals.reduce(
@@ -61,7 +38,10 @@ export default function MealView() {
     )
   }, [meals])
 
-  // Deduplicated meal suggestions — most recent occurrence per unique name
+  // Deduplicated meal suggestions — most recent occurrence per unique name.
+  // `meals` is ordered newest-first, so the first occurrence of each name is
+  // the most recently logged entry. Selecting a suggestion pre-fills the macro
+  // values from that entry, saving re-entry for regularly eaten meals.
   const mealSuggestions = useMemo(() => {
     const seen = new Set()
     const result = []
@@ -100,7 +80,7 @@ export default function MealView() {
   }
 
   async function handleAddMeal() {
-    setError('')
+    setSubmitError('')
     if (!form.name.trim()) return
 
     setSaving(true)
@@ -115,7 +95,7 @@ export default function MealView() {
     })
 
     if (error) {
-      setError(error.message)
+      setSubmitError(error.message)
     } else {
       setForm({ name: '', calories: '', protein: '', carbs: '', fats: '', notes: '' })
       await fetchMeals()
@@ -176,10 +156,15 @@ export default function MealView() {
             value={form.name}
             onChange={(e) => updateForm('name', e.target.value)}
             onFocus={() => {
+              // Cancel any pending close from a previous blur so the dropdown
+              // stays open when focus returns to the input.
               clearTimeout(blurTimeout.current)
               setShowSuggestions(true)
             }}
             onBlur={() => {
+              // Delay closing so a click on a suggestion item fires before the
+              // dropdown disappears. Without the delay, onBlur would close the
+              // dropdown before onMouseDown on the suggestion could register.
               blurTimeout.current = setTimeout(() => setShowSuggestions(false), 150)
             }}
             placeholder="Meal / food name"

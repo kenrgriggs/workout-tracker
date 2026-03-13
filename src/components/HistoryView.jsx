@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { WORKOUT_COLORS } from '../lib/workoutDefinitions'
 import { useAuth } from '../contexts/useAuth'
 import { SectionLabel, TypeBadge } from './ui'
-import { downloadCSV } from '../lib/export'
+import { exportWorkoutsCSV } from '../lib/workoutExport'
 
 function WorkoutDetail({ workout, onBack }) {
   const [sets, setSets] = useState([])
@@ -63,6 +63,9 @@ function WorkoutDetail({ workout, onBack }) {
 
   async function handleDelete() {
     setSaving(true)
+    // Delete sets before the workout. The DB schema has cascade delete on
+    // workout_id so this is redundant, but explicit is clearer and defensive
+    // against future schema changes.
     await supabase.from('sets').delete().eq('workout_id', workout.id)
     await supabase.from('workouts').delete().eq('id', workout.id)
     setSaving(false)
@@ -362,33 +365,7 @@ export default function HistoryView() {
 
   async function exportWorkouts() {
     setExporting(true)
-    const { data: allWorkouts } = await supabase
-      .from('workouts')
-      .select('id, day_number, workout_type, completed_at, notes')
-      .eq('user_id', user.id)
-      .order('completed_at', { ascending: false })
-    const { data: allSets } = await supabase
-      .from('sets')
-      .select('workout_id, exercise_name, set_number, weight_lbs, reps, completed')
-      .in('workout_id', (allWorkouts ?? []).map(w => w.id))
-    const workoutMap = {}
-    ;(allWorkouts ?? []).forEach(w => { workoutMap[w.id] = w })
-    const headers = ['Date', 'Day', 'Type', 'Notes', 'Exercise', 'Set', 'Weight (lbs)', 'Reps', 'Completed']
-    const rows = (allSets ?? []).map(s => {
-      const w = workoutMap[s.workout_id] ?? {}
-      return [
-        w.completed_at ? new Date(w.completed_at).toLocaleDateString() : '',
-        w.day_number ?? '',
-        w.workout_type ?? '',
-        w.notes ?? '',
-        s.exercise_name,
-        s.set_number,
-        s.weight_lbs ?? '',
-        s.reps ?? '',
-        s.completed ? 'Yes' : 'No',
-      ]
-    })
-    downloadCSV('workouts.csv', headers, rows)
+    await exportWorkoutsCSV(supabase, user.id)
     setExporting(false)
   }
 
