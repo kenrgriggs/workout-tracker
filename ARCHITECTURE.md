@@ -345,3 +345,5 @@ Tailwind utility classes are used selectively. Most per-component styles are inl
 | Weight storage | Always lbs in DB | Consider adding a `unit` column if multi-unit storage is ever needed |
 | Mobile Support | None | Convert to iPhone app????? |
 | Deleting History Sessions is not visibly immediate | None | Delete should be instant |
+| Adjust Run Times | None | Should be able to input run times and milage and such, to keep track of progress and better feed analytics |
+| 

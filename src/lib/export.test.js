@@ -81,4 +81,32 @@ describe('downloadCSV', () => {
     withAnchor(() => downloadCSV('test.csv', ['Name'], [['val']]))
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url')
   })
+
+  // With no data rows the output should be just the header line — no trailing newline,
+  // no phantom empty row. Callers export empty datasets (e.g. no workouts logged yet).
+  it('produces only the header line when rows is empty', () => {
+    withAnchor(() => downloadCSV('test.csv', ['Name', 'Calories'], []))
+    expect(capturedBlobContent).toBe('Name,Calories')
+  })
+
+  // null and undefined cell values should render as an empty quoted string (""),
+  // not the literal text "null" or "undefined". Verified by content, not just no-throw.
+  it('renders null cell as empty quoted string', () => {
+    withAnchor(() => downloadCSV('test.csv', ['Notes'], [[null]]))
+    expect(capturedBlobContent).toContain('""')
+    expect(capturedBlobContent).not.toContain('"null"')
+  })
+
+  it('renders undefined cell as empty quoted string', () => {
+    withAnchor(() => downloadCSV('test.csv', ['Notes'], [[undefined]]))
+    expect(capturedBlobContent).toContain('""')
+    expect(capturedBlobContent).not.toContain('"undefined"')
+  })
+
+  // Commas inside a cell value must be preserved — the surrounding quotes are what
+  // prevent CSV parsers from treating them as column separators.
+  it('preserves commas inside cell values via quoting', () => {
+    withAnchor(() => downloadCSV('test.csv', ['Notes'], [['3 sets, 10 reps']]))
+    expect(capturedBlobContent).toContain('"3 sets, 10 reps"')
+  })
 })
