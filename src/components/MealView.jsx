@@ -38,6 +38,20 @@ export default function MealView() {
     )
   }, [meals])
 
+  // Caloric percentages for each macro.
+  // Protein and carbs yield 4 cal/g; fats yield 9 cal/g.
+  // Returns null when calories are 0 to avoid dividing by zero.
+  const macroPct = useMemo(() => {
+    const { calories, protein, carbs, fats } = totals
+    const pct = (g, calPerG) =>
+      calories > 0 && g != null ? Math.round((g * calPerG / calories) * 100) : null
+    return {
+      protein: pct(protein, 4),
+      carbs:   pct(carbs, 4),
+      fats:    pct(fats, 9),
+    }
+  }, [totals])
+
   // Deduplicated meal suggestions — most recent occurrence per unique name.
   // `meals` is ordered newest-first, so the first occurrence of each name is
   // the most recently logged entry. Selecting a suggestion pre-fills the macro
@@ -136,14 +150,17 @@ export default function MealView() {
         <div className="stat-card">
           <div className="stat-label">Protein</div>
           <p className="stat-value">{totals.protein}</p>
+          {macroPct.protein !== null && <p className="stat-pct">{macroPct.protein}%</p>}
         </div>
         <div className="stat-card">
           <div className="stat-label">Carbs</div>
           <p className="stat-value">{totals.carbs}</p>
+          {macroPct.carbs !== null && <p className="stat-pct">{macroPct.carbs}%</p>}
         </div>
         <div className="stat-card">
           <div className="stat-label">Fats</div>
           <p className="stat-value">{totals.fats}</p>
+          {macroPct.fats !== null && <p className="stat-pct">{macroPct.fats}%</p>}
         </div>
       </div>
 

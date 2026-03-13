@@ -50,13 +50,25 @@ export default function NutritionAnalyticsView() {
         avgProtein: Math.round(m.totalProtein / m.count),
       }))
 
+    const avgCalories = avg('calories')
+    const avgProtein  = avg('protein')
+    const avgCarbs    = avg('carbs')
+    const avgFats     = avg('fats')
+
+    // Macro calorie percentages — useful context alongside the gram values.
+    const pct = (g, calPerG) =>
+      avgCalories > 0 ? Math.round((g * calPerG / avgCalories) * 100) : null
+
     return {
       totalMeals: meals.length,
       daysTracked,
-      avgCalories: avg('calories'),
-      avgProtein:  avg('protein'),
-      avgCarbs:    avg('carbs'),
-      avgFats:     avg('fats'),
+      avgCalories,
+      avgProtein,
+      avgCarbs,
+      avgFats,
+      proteinPct: pct(avgProtein, 4),
+      carbsPct:   pct(avgCarbs, 4),
+      fatsPct:    pct(avgFats, 9),
       byDay,
       topMeals,
     }

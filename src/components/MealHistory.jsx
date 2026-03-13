@@ -38,6 +38,17 @@ export default function MealHistory() {
     )
   }, [meals])
 
+  const macroPct = useMemo(() => {
+    const { calories, protein, carbs, fats } = totals
+    const pct = (g, calPerG) =>
+      calories > 0 && g != null ? Math.round((g * calPerG / calories) * 100) : null
+    return {
+      protein: pct(protein, 4),
+      carbs:   pct(carbs, 4),
+      fats:    pct(fats, 9),
+    }
+  }, [totals])
+
   return (
     <div className="page">
       <div className="page-header">
@@ -51,14 +62,17 @@ export default function MealHistory() {
         <div className="stat-card">
           <div className="stat-label">Protein</div>
           <p className="stat-value">{totals.protein}</p>
+          {macroPct.protein !== null && <p className="stat-pct">{macroPct.protein}%</p>}
         </div>
         <div className="stat-card">
           <div className="stat-label">Carbs</div>
           <p className="stat-value">{totals.carbs}</p>
+          {macroPct.carbs !== null && <p className="stat-pct">{macroPct.carbs}%</p>}
         </div>
         <div className="stat-card">
           <div className="stat-label">Fats</div>
           <p className="stat-value">{totals.fats}</p>
+          {macroPct.fats !== null && <p className="stat-pct">{macroPct.fats}%</p>}
         </div>
       </div>
 
