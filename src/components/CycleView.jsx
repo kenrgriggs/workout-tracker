@@ -11,10 +11,15 @@ export default function CycleView({ onSelectDay }) {
 
   useEffect(() => {
     async function fetchLastWorkout() {
+      // Exclude REST_DAY records from the position query. REST_DAY means the user
+      // took a rest instead of the scheduled workout — the workout is still pending.
+      // SKIPPED records ARE included: a skip means the user explicitly moved past
+      // that day, so the cycle should advance.
       const { data } = await supabase
         .from('workouts')
         .select('*')
         .eq('user_id', user.id)
+        .neq('notes', 'REST_DAY')
         .order('completed_at', { ascending: false })
         .limit(1)
         .single()

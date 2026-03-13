@@ -88,7 +88,11 @@ All tables enforce Row Level Security (RLS). Every row is owned by a user via `u
 | day_number | int | 1–9 (maps to WORKOUT_CYCLE) |
 | workout_type | text | "Push A", "Pull B", "Legs", "VO2", "Zone 2", "Rest" |
 | completed_at | timestamptz | Default: now() |
-| notes | text | Optional; value `"SKIPPED"` marks a skipped session |
+| notes | text | Optional; `"SKIPPED"` marks a skipped session; `"REST_DAY"` marks an intentional rest taken instead of the scheduled workout |
+
+Sentinel values for `notes`:
+- `"SKIPPED"` — day was skipped; cycle advances (CycleView counts it when computing current position)
+- `"REST_DAY"` — user took a rest instead of the scheduled workout; cycle does NOT advance (CycleView excludes REST_DAY from its position query via `.neq('notes', 'REST_DAY')`). The record retains the scheduled `day_number` for history display. Up to 7 consecutive REST_DAY records are allowed before the button is disabled.
 
 Indexes: `user_id`, `completed_at DESC`
 

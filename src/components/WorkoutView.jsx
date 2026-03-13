@@ -348,8 +348,9 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
     }
   })
   const [saving, setSaving] = useState(false)
-
-
+  // Tracks how many consecutive REST_DAY records exist since the last real workout.
+  // "Take Rest Day" is disabled at 7 to prevent indefinite deferral.
+  const [consecutiveRestDays, setConsecutiveRestDays] = useState(0)
 
   useEffect(() => {
     async function fetchLastSession() {
@@ -381,6 +382,28 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
     }
     fetchLastSession()
   }, [dayNumber, user.id])
+
+  useEffect(() => {
+    async function fetchConsecutiveRestDays() {
+      // Fetch the 8 most recent workouts (7 possible rest days + 1 boundary record).
+      // Count how many leading ones are REST_DAY before hitting a real workout.
+      const { data } = await supabase
+        .from('workouts')
+        .select('notes')
+        .eq('user_id', user.id)
+        .order('completed_at', { ascending: false })
+        .limit(8)
+
+      if (!data) return
+      let count = 0
+      for (const w of data) {
+        if (w.notes === 'REST_DAY') count++
+        else break
+      }
+      setConsecutiveRestDays(count)
+    }
+    fetchConsecutiveRestDays()
+  }, [user.id])
 
   // Persist the draft on every change so the user can safely close the browser
   // mid-workout. The draft is cleared (localStorage.removeItem) on finish or skip.
@@ -454,6 +477,24 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
       workout_type: workout.type,
       completed_at: new Date().toISOString(),
       notes: 'SKIPPED',
+    })
+    localStorage.removeItem(draftKey)
+    setSaving(false)
+    onFinish?.()
+  }
+
+  async function handleRest() {
+    setSaving(true)
+    // 'REST_DAY' is distinct from 'SKIPPED': the user intentionally rested instead
+    // of doing the scheduled workout. Both advance the cycle; HistoryView and
+    // AnalyticsView each treat them as non-training sessions, but display them
+    // with different labels so the distinction is visible in history.
+    await supabase.from('workouts').insert({
+      user_id: user.id,
+      day_number: dayNumber,
+      workout_type: workout.type,
+      completed_at: new Date().toISOString(),
+      notes: 'REST_DAY',
     })
     localStorage.removeItem(draftKey)
     setSaving(false)
@@ -688,6 +729,25 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
           >
             Skip Day
           </button>
+          <button
+            onClick={handleRest}
+            disabled={saving || consecutiveRestDays >= 7}
+            style={{
+              width: '100%',
+              padding: '13px',
+              borderRadius: 8,
+              background: 'transparent',
+              border: '1px solid #2a2a2a',
+              color: '#6b6b6b',
+              fontFamily: '"Bebas Neue", sans-serif',
+              fontSize: 20,
+              letterSpacing: '0.06em',
+              cursor: 'pointer',
+              opacity: saving ? 0.5 : 1,
+            }}
+          >
+            Take Rest Day
+          </button>
         </div>
       </div>
     )
@@ -726,6 +786,52 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
       <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 12, color: '#666', marginBottom: 16, letterSpacing: '0.04em' }}>
         {workout.duration}
       </p>
+
+      {/* Quick actions — visible at the top so the user doesn't have to scroll
+          down through all the exercises just to skip or mark a rest day.
+          Finish Workout stays at the bottom since it's the post-workout CTA. */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <button
+          onClick={handleSkip}
+          disabled={saving}
+          style={{
+            flex: 1,
+            padding: '9px 12px',
+            borderRadius: 8,
+            background: 'transparent',
+            border: '1px solid #2a2a2a',
+            color: '#555',
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 11,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            opacity: saving ? 0.5 : 1,
+          }}
+        >
+          Skip Day
+        </button>
+        <button
+          onClick={handleRest}
+          disabled={saving || consecutiveRestDays >= 7}
+          style={{
+            flex: 1,
+            padding: '9px 12px',
+            borderRadius: 8,
+            background: 'transparent',
+            border: '1px solid #2a2a2a',
+            color: '#555',
+            fontFamily: '"DM Mono", monospace',
+            fontSize: 11,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            opacity: saving ? 0.5 : 1,
+          }}
+        >
+          Take Rest Day
+        </button>
+      </div>
 
       {/* Timing bar */}
       <TimingBar timing={workout.timing} />
@@ -833,6 +939,26 @@ export default function WorkoutView({ dayNumber, onBack, onFinish }) {
           }}
         >
           Skip Day
+        </button>
+        <button
+          onClick={handleRest}
+          disabled={saving || consecutiveRestDays >= 7}
+          style={{
+            width: '100%',
+            padding: '13px',
+            borderRadius: 8,
+            background: 'transparent',
+            border: '1px solid #2a2a2a',
+            color: '#6b6b6b',
+            fontFamily: '"Bebas Neue", sans-serif',
+            fontSize: 20,
+            letterSpacing: '0.06em',
+            cursor: 'pointer',
+            opacity: saving ? 0.5 : 1,
+            transition: 'opacity 0.15s',
+          }}
+        >
+          Take Rest Day
         </button>
       </div>
     </div>

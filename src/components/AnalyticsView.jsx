@@ -32,13 +32,14 @@ export default function AnalyticsView() {
       setLoading(true)
 
       try {
-        // Exclude skipped days from all stats — a skip is a DB record for cycle
-        // tracking purposes only, not an actual training event.
+        // Exclude skipped and rest days from all stats — these are DB records for
+        // cycle tracking only, not actual training events.
         const { data: workouts, error: workoutError } = await supabase
           .from('workouts')
           .select('id, completed_at')
           .eq('user_id', user.id)
           .neq('notes', 'SKIPPED')
+          .neq('notes', 'REST_DAY')
 
         if (workoutError) throw workoutError
 

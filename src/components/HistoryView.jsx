@@ -14,6 +14,7 @@ function WorkoutDetail({ workout, onBack }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const color = WORKOUT_COLORS[workout.workout_type] ?? '#555'
   const isSkipped = workout.notes === 'SKIPPED'
+  const isRestDay = workout.notes === 'REST_DAY'
 
   useEffect(() => {
     async function fetchSets() {
@@ -178,7 +179,7 @@ function WorkoutDetail({ workout, onBack }) {
         })}
       </p>
 
-      {isSkipped ? (
+      {isSkipped || isRestDay ? (
         <div style={{
           background: '#161616',
           border: '1px solid #2a2a2a',
@@ -187,10 +188,10 @@ function WorkoutDetail({ workout, onBack }) {
           textAlign: 'center',
         }}>
           <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 32, color: '#444', letterSpacing: '0.06em', marginBottom: 4 }}>
-            Skipped
+            {isRestDay ? 'Rest Day' : 'Skipped'}
           </p>
           <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 13, color: '#444' }}>
-            This day was skipped
+            {isRestDay ? 'Took a rest day instead' : 'This day was skipped'}
           </p>
         </div>
       ) : loading ? (
@@ -321,7 +322,7 @@ function WorkoutDetail({ workout, onBack }) {
             </div>
           ))}
 
-          {workout.notes && workout.notes !== 'SKIPPED' && (
+          {workout.notes && workout.notes !== 'SKIPPED' && workout.notes !== 'REST_DAY' && (
             <>
               <SectionLabel>Notes</SectionLabel>
               <div style={{
@@ -422,6 +423,7 @@ export default function HistoryView() {
               const color = WORKOUT_COLORS[workout.workout_type] ?? '#555'
               const date = new Date(workout.completed_at)
               const isSkipped = workout.notes === 'SKIPPED'
+              const isRestDay = workout.notes === 'REST_DAY'
               return (
                 <button
                   key={workout.id}
@@ -435,7 +437,7 @@ export default function HistoryView() {
                     padding: '14px 16px',
                     cursor: 'pointer',
                     transition: 'transform 0.15s',
-                    opacity: isSkipped ? 0.6 : 1,
+                    opacity: isSkipped || isRestDay ? 0.6 : 1,
                   }}
                   onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
                   onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -463,23 +465,30 @@ export default function HistoryView() {
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ marginBottom: 3 }}>
-                        <TypeBadge type={workout.workout_type} />
+                        {/* For rest days, dim the scheduled workout badge rather than
+                            hiding it — context for which day was deferred is useful */}
+                        <TypeBadge type={workout.workout_type} style={{ opacity: isRestDay ? 0.4 : 1 }} />
                       </div>
                       <p style={{
                         fontFamily: '"Bebas Neue", sans-serif',
                         fontSize: 19,
                         letterSpacing: '0.03em',
-                        color: '#f0f0f0',
+                        color: isRestDay ? '#555' : '#f0f0f0',
                         lineHeight: 1,
                         marginBottom: 2,
                       }}>
-                        {workout.workout_type}
+                        {isRestDay ? 'Rest Day' : workout.workout_type}
                         {isSkipped && (
                           <span style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: '#555', marginLeft: 8, letterSpacing: '0.08em' }}>
                             skipped
                           </span>
                         )}
                       </p>
+                      {isRestDay && (
+                        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: 10, color: '#444', letterSpacing: '0.06em', marginBottom: 2 }}>
+                          {workout.workout_type} deferred
+                        </p>
+                      )}
                       <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: 12, color: '#6b6b6b' }}>
                         {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                       </p>
