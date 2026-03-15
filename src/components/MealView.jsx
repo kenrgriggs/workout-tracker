@@ -26,16 +26,19 @@ export default function MealView() {
   const error = fetchError || submitError
 
   const totals = useMemo(() => {
-    return meals.reduce(
-      (acc, meal) => {
-        acc.calories += meal.calories ?? 0
-        acc.protein += meal.protein ?? 0
-        acc.carbs += meal.carbs ?? 0
-        acc.fats += meal.fats ?? 0
-        return acc
-      },
-      { calories: 0, protein: 0, carbs: 0, fats: 0 }
-    )
+    const today = new Date().toDateString()
+    return meals
+      .filter(meal => new Date(meal.consumed_at).toDateString() === today)
+      .reduce(
+        (acc, meal) => {
+          acc.calories += meal.calories ?? 0
+          acc.protein += meal.protein ?? 0
+          acc.carbs += meal.carbs ?? 0
+          acc.fats += meal.fats ?? 0
+          return acc
+        },
+        { calories: 0, protein: 0, carbs: 0, fats: 0 }
+      )
   }, [meals])
 
   // Caloric percentages for each macro.
@@ -234,7 +237,7 @@ export default function MealView() {
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
+        <div className="macro-grid">
           <input
             className="input"
             type="number"

@@ -22,6 +22,8 @@
     -webkit-font-smoothing: antialiased;
     font-size: 15px;
     line-height: 1.6;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   input[type="number"] {
@@ -156,7 +158,7 @@
   }
 
   .bottom-nav {
-    height: 72px;
+    height: calc(72px + env(safe-area-inset-bottom));
   }
 
   .bottom-nav-icon {
@@ -357,6 +359,18 @@
   margin-bottom: 24px;
 }
 
+.macro-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 520px) {
+  .macro-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 .stat-card {
   background: #0d0d0d;
   border: 1px solid #1a1a1a;
@@ -512,6 +526,7 @@
   background-color: rgba(10, 10, 10, 0.88);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid #191919;
+  padding-top: env(safe-area-inset-top);
 }
 
 .app-header-inner {
@@ -636,7 +651,7 @@
   background-color: rgba(10, 10, 10, 0.85);
   backdrop-filter: blur(12px);
   border-top: 1px solid #1a1a1a;
-  height: 64px;
+  height: calc(64px + env(safe-area-inset-bottom));
   padding-bottom: calc(env(safe-area-inset-bottom) + 6px);
 }
 

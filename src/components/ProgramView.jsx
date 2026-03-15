@@ -105,7 +105,7 @@ export default function ProgramView() {
       </div>
 
       <SectionLabel>Workouts</SectionLabel>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 100 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {daysGrid.map((workout) => {
           const color = WORKOUT_COLORS[workout.type] ?? '#555'
           const isOpen = openId === workout.day
